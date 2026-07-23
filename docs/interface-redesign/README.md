@@ -1,17 +1,17 @@
 # GUCA interface redesign
 
-Рабочий комплект материалов для реализации нового интерфейса GUCA.
+A working set of materials for the implementation of the new GUCA interface.
 
-## Статус
+## Status
 
-- Спецификация v1.0 зафиксирована как основа для P0.
-- Новые идеи не расширяют P0 без отдельного решения и переносятся в будущий backlog P1/P2.
-- Keynote-макет сохранён в проекте как переносимый PDF из 21 экрана.
+- Specification v1.0 is fixed as the basis for P0.
+- New ideas do not extend P0 without a separate solution and are moved to the future P1/P2 backlog.
+- The Keynote mockup is saved in the project as a portable PDF of 21 screens.
 
-## Файлы
+## Files
 
-- `GUCA_interface_specification_v1.0.md` — структура интерфейса, поведение элементов, приоритеты и критерии готовности.
-- `GUCA_next_steps_v1.0.md` — краткий порядок дальнейших действий.
-- `GUCA_interface_wireframe_v1.pdf` — экспорт рабочего Keynote-макета.
+- `GUCA_interface_specification_v1.0.md` — interface structure, element behavior, priorities, and completion criteria.
+- `GUCA_next_steps_v1.0.md` — a brief outline of the next steps.
+- `GUCA_interface_wireframe_v1.pdf` — export of the working Keynote layout.
 
-Исходный файл `draft web GUCA.key` остаётся в папке `media/website/version 1/` вне репозитория и не изменяется.
+The original `draft web GUCA.key` file remains in the `media/website/version 1/` folder outside the repository and is unchanged.
