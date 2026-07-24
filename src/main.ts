@@ -344,12 +344,44 @@ function handleGraphCountsPotentiallyChanged(reason: TickReason) {
 
 const pauseResumeButton = document.getElementById('pause-resume-button') as HTMLButtonElement;
 const resetBtn          = document.getElementById('reset-button') as HTMLButtonElement | null;
+const aboutToggleButton = document.getElementById('about-toggle-button') as HTMLButtonElement | null;
+const aboutPanel        = document.getElementById('about-panel') as HTMLElement | null;
+
+function setAboutPanelOpen(open: boolean) {
+  if (!aboutToggleButton || !aboutPanel) return;
+  aboutPanel.hidden = !open;
+  aboutToggleButton.setAttribute('aria-expanded', String(open));
+
+  requestAnimationFrame(() => {
+    window.dispatchEvent(new Event('resize'));
+  });
+}
+
+aboutToggleButton?.addEventListener('click', () => {
+  setAboutPanelOpen(aboutToggleButton.getAttribute('aria-expanded') !== 'true');
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && aboutToggleButton?.getAttribute('aria-expanded') === 'true') {
+    setAboutPanelOpen(false);
+    aboutToggleButton.focus();
+  }
+});
+
+type SimulationButtonState = 'start' | 'running' | 'resume';
+
+function setSimulationButtonState(state: SimulationButtonState) {
+  const label = state === 'running' ? 'Pause' : state === 'resume' ? 'Resume' : 'Start';
+  pauseResumeButton.textContent = label;
+  pauseResumeButton.dataset.state = state;
+  pauseResumeButton.setAttribute('aria-label', `${label} simulation`);
+  pauseResumeButton.title = `${label} simulation`;
+}
 
 resetBtn?.addEventListener('click', () => {
   clearInterval(simulationInterval);
   isSimulationRunning = false;
-  pauseResumeButton.textContent = 'Start';
-  pauseResumeButton.style.backgroundColor = 'lightgreen';
+  setSimulationButtonState('start');
   setControlsEnabled(true);
 
   if (lastLoadedConfig) {
@@ -753,10 +785,9 @@ function syncMobilePlayIcon() {
 }
 
 function syncSlowButtonsUI() {
-  // Desktop turtle button
   if (slowBtn) {
     slowBtn.classList.toggle('active', slowMode);
-    slowBtn.textContent = slowMode ? '🐢 Slow (ON)' : '🐢 Slow';
+    slowBtn.textContent = slowMode ? '0.5×' : '1×';
     slowBtn.setAttribute('aria-pressed', slowMode ? 'true' : 'false');
     slowBtn.title = slowMode ? 'Slow mode enabled' : 'Slow mode disabled';
   }
@@ -913,7 +944,7 @@ function pauseSimulationForRuleEditor() {
   if (!isSimulationRunning) return;
   clearInterval(simulationInterval);
   isSimulationRunning = false;
-  pauseResumeButton.textContent = 'Resume';
+  setSimulationButtonState('resume');
   setControlsEnabled(true);
   syncMobilePlayIcon();
 }
@@ -1032,6 +1063,13 @@ async function loadGenesLibrary() {
 
   wireSelect(geneSelect);
   wireSelect(mobileSelect);
+
+  document.getElementById('new-genome-button')?.addEventListener('click', () => {
+    const emptyGenomePath = 'data/genoms/empty.yaml';
+    geneSelect.value = emptyGenomePath;
+    syncGenomeSelects(emptyGenomePath);
+    void handleGenomeSelection(emptyGenomePath);
+  });
   
 
   // Mobile toolbar buttons proxy desktop logic (no code duplication)
@@ -1102,8 +1140,7 @@ async function applyGenomConfig(cfg: any, labelForSelect: string | null) {
   lastLoadedConfig.machine.reseed_isolated_A = reseedActive;  
 
   gumMachine.resetIterations();
-  pauseResumeButton.textContent = 'Start';
-  pauseResumeButton.style.backgroundColor = 'lightgreen';
+  setSimulationButtonState('start');
   resetGraph();                // handles zoom+fit
   refreshMaxStepsInput();
   refreshMachineSettingsInputs();
@@ -1944,13 +1981,21 @@ function updateDebugInfo(opts?: { forceRulesRebuild?: boolean }) {
   }
 
   if (statusInfoElement) {
+    const nodeLabel = nodes.length === 1 ? 'node' : 'nodes';
+    const edgeLabel = links.length === 1 ? 'edge' : 'edges';
     statusInfoElement.textContent =
-      `Nodes: ${nodes.length} | Edges: ${links.length} | Iterations: ${gumMachine.getIterations()}`;
+      `Iteration ${gumMachine.getIterations()} · ${nodes.length} ${nodeLabel} · ${links.length} ${edgeLabel}`;
   }
 
   const board = document.getElementById('rule-board');
   const toggleBtn = document.getElementById('toggle-rules-btn') as HTMLButtonElement | null;
   const items = gumMachine.getRuleItems();
+  const genomeCount = document.getElementById('genome-count');
+  if (genomeCount) {
+    const enabledCount = items.filter(item => item.isEnabled).length;
+    const ruleLabel = items.length === 1 ? 'rule' : 'rules';
+    genomeCount.textContent = `${items.length} ${ruleLabel} · ${enabledCount} active`;
+  }
   const MAX = 60;
 
 
@@ -2127,8 +2172,7 @@ function currentIntervalMs() {
   return slowMode ? SLOW_MS : (fastMs || FAST_MS_DEFAULT);
 }
 
-pauseResumeButton.textContent = 'Start';
-pauseResumeButton.style.backgroundColor = 'lightgreen';
+setSimulationButtonState('start');
 
 pauseResumeButton.addEventListener('click', () => {
   isSimulationRunning = !isSimulationRunning;
@@ -2137,11 +2181,11 @@ pauseResumeButton.addEventListener('click', () => {
       tickingSound.setEnabled(true);
     }
     simulationInterval = setInterval(unfoldGraph, currentIntervalMs());
-    pauseResumeButton.textContent = 'Pause';
+    setSimulationButtonState('running');
     setControlsEnabled(false);
   } else {
     clearInterval(simulationInterval);
-    pauseResumeButton.textContent = 'Resume';
+    setSimulationButtonState('resume');
     setControlsEnabled(true);
   }
   syncMobilePlayIcon();
@@ -2414,8 +2458,7 @@ function unfoldGraph() {
   if (gumMachine.reachedMaxSteps()) {
     clearInterval(simulationInterval);
     isSimulationRunning = false;
-    pauseResumeButton.textContent = 'Start';
-    pauseResumeButton.style.backgroundColor = 'lightgreen';
+    setSimulationButtonState('start');
     setControlsEnabled(true);
     updateDebugInfo();
     syncMobilePlayIcon();
