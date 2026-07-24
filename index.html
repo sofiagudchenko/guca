@@ -111,7 +111,7 @@
 
           <section class="advanced-group" aria-labelledby="graph-behaviour-heading">
             <h3 id="graph-behaviour-heading">Graph behaviour</h3>
-            <label><input type="checkbox" id="maintain-single-component" checked /> Maintain a single component</label>
+            <label><input type="checkbox" id="maintain-single-component" /> Maintain a single component</label>
             <label><input type="checkbox" id="auto-center-checkbox" checked /> Smooth auto-center</label>
             <label><input type="checkbox" id="auto-scale-checkbox" checked /> Smooth auto-scale</label>
           </section>
@@ -155,7 +155,7 @@
               <select id="display-options">
                 <option value="edges">Edges</option>
                 <option value="nodes">Nodes</option>
-                <option value="both">Nodes &amp; edges</option>
+                <option value="both" selected>Nodes &amp; edges</option>
               </select>
             </div>
             <div class="control-buttons">
@@ -217,7 +217,7 @@
         <div id="mobile-toolbar" aria-label="Mobile controls" hidden>
           <button id="mobile-play" type="button">▶</button>
           <button id="mobile-reset" type="button">↻</button>
-          <button id="mobile-slow" type="button">½×</button>
+          <button id="mobile-slow" type="button" title="Change simulation speed">1×</button>
           <button id="mobile-view-toggle" class="toggle-active" type="button" title="Switch to 3D view">2D</button>
           <button id="mobile-share" type="button" title="Copy a shareable link">↗</button>
           <select id="gene-select-mobile" title="Genome"></select>
@@ -238,17 +238,17 @@
 
         <div class="toolbar-group speed-controls">
           <span class="toolbar-label">speed</span>
-          <button id="slowdown-button" class="segmented-button" type="button" title="Toggle slow mode">1×</button>
+          <button id="slowdown-button" class="segmented-button" type="button" title="Change simulation speed">1×</button>
         </div>
 
-        <div class="toolbar-group segmented-control" aria-label="Graph tools">
+        <div class="toolbar-group segmented-control graph-tools-control" aria-label="Graph tools">
           <button id="tool-move-button" class="segment active" type="button" title="Move, pan, or drag nodes">move</button>
           <button id="tool-scissors-button" class="segment" type="button" title="Cut edges while dragging">cut</button>
         </div>
 
         <div class="toolbar-group segmented-control view-control" aria-label="View">
-          <button id="view-2d-button" class="segment active" type="button" title="Standard 2D view">2D</button>
-          <button id="view-3d-button" class="segment" type="button" title="3D view">3D</button>
+          <button id="view-2d-button" class="segment active" type="button" title="Standard 2D view" aria-pressed="true">2D</button>
+          <button id="view-3d-button" class="segment" type="button" title="3D view" aria-pressed="false">3D</button>
         </div>
       </footer>
     </section>

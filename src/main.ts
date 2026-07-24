@@ -36,6 +36,20 @@ import { createRuleEditorController } from './ruleEditor';
 import { formatNodeInspectorText } from './nodeInspector';
 import { edgeGradientId, shouldUseGradientEdge } from './edgeGradients';
 import { DetectedFace, detectFaces } from './faceDetection';
+import {
+  DEFAULT_DISPLAY_OPTION,
+  DEFAULT_MAINTAIN_SINGLE_COMPONENT,
+  DEFAULT_ORPHAN_CLEANUP_ENABLED,
+  DEFAULT_PLAYBACK_SPEED,
+  GraphTool,
+  GraphViewMode,
+  PlaybackSpeed,
+  nextPlaybackSpeed,
+  playbackIntervalMs,
+  toolAfterClick,
+  toolForView,
+  viewAfterClick,
+} from './p0UiBehavior';
 
 
 
@@ -58,13 +72,13 @@ const DEFAULT_MACHINE_CFG: MachineCfg = {
     connect_all: false,
   },
   topology_semantics: 'snapshot' as TopologySemantics,
-  maintain_single_component: true,
+  maintain_single_component: DEFAULT_MAINTAIN_SINGLE_COMPONENT,
+  orphan_cleanup: { enabled: DEFAULT_ORPHAN_CLEANUP_ENABLED },
   reseed_isolated_A: true,
 };
 
 const config = { debug: false };              // simple UI verbosity flag
 const FAST_MS_DEFAULT = 200;                  // default fast tick ms
-const SLOW_MS = 500;                          // slow mode tick ms
 const AUTO_MAX_FILL = 0.5;                    // auto camera max fill
 const CAMERA_MA_WINDOW = 25;                  // smooth camera EMA window
 const CAMERA_ALPHA = 2 / (CAMERA_MA_WINDOW + 1);
@@ -153,9 +167,8 @@ function applyPaletteSlotColor(idx: number, cssColor: string) {
    2) STATE (runtime, UI toggles, misc)
    ========================================================================= */
 
-type Tool = 'move' | 'scissors';
-
-type ViewMode = '2d' | '3d';
+type Tool = GraphTool;
+type ViewMode = GraphViewMode;
 let viewMode: ViewMode = '2d';
 
 let showAllRules = false;
@@ -166,7 +179,7 @@ let faceFillOpacity = FACE_FILL_DEFAULT_OPACITY;
 let isSimulationRunning = false;
 let simulationInterval: any;
 
-let slowMode = false;
+let playbackSpeed: PlaybackSpeed = DEFAULT_PLAYBACK_SPEED;
 let fastMs = FAST_MS_DEFAULT;
 
 let currentTool: Tool = 'move';
@@ -398,6 +411,7 @@ resetBtn?.addEventListener('click', () => {
 
 const btnMove      = document.getElementById('tool-move-button') as HTMLButtonElement | null;
 const btnScissors  = document.getElementById('tool-scissors-button') as HTMLButtonElement | null;
+const graphToolsControl = document.querySelector('.graph-tools-control') as HTMLElement | null;
 const slowBtn      = document.getElementById('slowdown-button') as HTMLButtonElement | null;
 
 const view2dBtn = document.getElementById('view-2d-button') as HTMLButtonElement | null;
@@ -785,19 +799,22 @@ function syncMobilePlayIcon() {
 }
 
 function syncSlowButtonsUI() {
+  const label = `${playbackSpeed}×`;
+  const title = `Simulation speed: ${label}. Click to change speed`;
+
   if (slowBtn) {
-    slowBtn.classList.toggle('active', slowMode);
-    slowBtn.textContent = slowMode ? '0.5×' : '1×';
-    slowBtn.setAttribute('aria-pressed', slowMode ? 'true' : 'false');
-    slowBtn.title = slowMode ? 'Slow mode enabled' : 'Slow mode disabled';
+    slowBtn.classList.remove('active');
+    slowBtn.textContent = label;
+    slowBtn.setAttribute('aria-label', title);
+    slowBtn.title = title;
   }
 
-  // Mobile toolbar turtle button
   const mobileSlow = document.getElementById('mobile-slow') as HTMLButtonElement | null;
   if (mobileSlow) {
-    mobileSlow.classList.toggle('toggle-active', slowMode);
-    mobileSlow.setAttribute('aria-pressed', slowMode ? 'true' : 'false');
-    mobileSlow.title = slowMode ? 'Slow mode enabled' : 'Slow mode disabled';
+    mobileSlow.classList.remove('toggle-active');
+    mobileSlow.textContent = label;
+    mobileSlow.setAttribute('aria-label', title);
+    mobileSlow.title = title;
   }
 }
 
@@ -953,6 +970,15 @@ function stopSimulationLoop() {
   clearInterval(simulationInterval);
   isSimulationRunning = false;
 }
+
+function stopSimulationForGenomeLoad() {
+  stopSimulationLoop();
+  setSimulationButtonState('start');
+  setControlsEnabled(true);
+  syncMobilePlayIcon();
+  setTool('move');
+}
+
 const ruleEditor = createRuleEditorController({
   pauseForEditor: pauseSimulationForRuleEditor,
   stopSimulation: stopSimulationLoop,
@@ -1101,10 +1127,14 @@ async function loadGenomFromYaml(path: string) {
 }
 
 async function applyGenomConfig(cfg: any, labelForSelect: string | null) {
+  stopSimulationForGenomeLoad();
   lastLoadedConfig = cfg ? deepClone(cfg) : {};
 
-  (gumMachine as any) = buildMachineFromConfig(cfg, gumGraph, maintainChk?.checked ?? true);
-  gumMachine.setMaxSteps(-1);
+  (gumMachine as any) = buildMachineFromConfig(
+    cfg,
+    gumGraph,
+    DEFAULT_MAINTAIN_SINGLE_COMPONENT
+  );
 
   const ocFromCfg = cfg?.machine?.orphan_cleanup;
 
@@ -1114,9 +1144,9 @@ async function applyGenomConfig(cfg: any, labelForSelect: string | null) {
     lastLoadedConfig.machine.orphan_cleanup = deepClone(ocFromCfg);
     // No need to call setOrphanCleanup here: buildMachineFromConfig already wired it into the machine.
   } else {
-    // No orphan_cleanup block in the genome → apply a default runtime config (enabled)
+    // No orphan_cleanup block in the genome → keep detached components visible.
     const fallbackOc = {
-      enabled: true,
+      enabled: DEFAULT_ORPHAN_CLEANUP_ENABLED,
       thresholds: { size1: 5, size2: 7, others: 10 },
       fadeStarts: { size1: 3, size2: 5, others: 8 },
     };
@@ -1141,6 +1171,7 @@ async function applyGenomConfig(cfg: any, labelForSelect: string | null) {
 
   gumMachine.resetIterations();
   setSimulationButtonState('start');
+  setControlsEnabled(true);
   resetGraph();                // handles zoom+fit
   refreshMaxStepsInput();
   refreshMachineSettingsInputs();
@@ -1297,26 +1328,55 @@ mobileShareBtn?.addEventListener('click', () => { void copyShareLinkToClipboard(
    ========================================================================= */
 
 function setTool(tool: Tool) {
-  currentTool = tool;
-  btnMove?.classList.toggle('active', tool === 'move');
-  btnScissors?.classList.toggle('active', tool === 'scissors');
-  svg.style('cursor', tool === 'scissors' ? 'crosshair' : 'default');
+  currentTool = toolForView(tool, viewMode);
+  isCutting = false;
+  lastCutPt = null;
+
+  const toolsAreInteractive = viewMode === '2d';
+  const moveIsActive = toolsAreInteractive && currentTool === 'move';
+  const cutIsActive = toolsAreInteractive && currentTool === 'scissors';
+
+  btnMove?.classList.toggle('active', moveIsActive);
+  btnMove?.setAttribute('aria-pressed', String(moveIsActive));
+  btnScissors?.classList.toggle('active', cutIsActive);
+  btnScissors?.setAttribute('aria-pressed', String(cutIsActive));
+  svg.style('cursor', currentTool === 'scissors' ? 'crosshair' : 'default');
   graphGroup.selectAll<SVGGElement, Node>('.node')
-    .style('pointer-events', tool === 'scissors' ? 'none' : 'auto');
-    renderNodeInspector(undefined);
+    .style('pointer-events', currentTool === 'scissors' ? 'none' : 'auto');
+  renderNodeInspector(undefined);
+}
 
-  }
-
-btnMove?.addEventListener('click', () => setTool('move'));
-btnScissors?.addEventListener('click', () => setTool('scissors'));
+btnMove?.addEventListener('click', () => {
+  setTool(toolAfterClick(currentTool, 'move', viewMode));
+});
+btnScissors?.addEventListener('click', () => {
+  setTool(toolAfterClick(currentTool, 'scissors', viewMode));
+});
 setTool('move');
 
 function setViewMode(mode: ViewMode) {
   if (viewMode === mode) return;
   viewMode = mode;
 
+  const cutUnavailable = mode === '3d';
+  graphToolsControl?.classList.toggle('is-3d', cutUnavailable);
+  if (btnMove) {
+    btnMove.disabled = cutUnavailable;
+    btnMove.title = cutUnavailable
+      ? 'Move is the only tool available in 3D'
+      : 'Move, pan, or drag nodes';
+  }
+  if (btnScissors) {
+    btnScissors.hidden = cutUnavailable;
+    btnScissors.disabled = cutUnavailable;
+    btnScissors.setAttribute('aria-hidden', String(cutUnavailable));
+  }
+  setTool(toolForView(currentTool, mode));
+
   view2dBtn?.classList.toggle('active', mode === '2d');
+  view2dBtn?.setAttribute('aria-pressed', String(mode === '2d'));
   view3dBtn?.classList.toggle('active', mode === '3d');
+  view3dBtn?.setAttribute('aria-pressed', String(mode === '3d'));
 
   if (mobileViewToggleBtn) {
     // Button shows the CURRENT mode
@@ -1362,8 +1422,12 @@ function setViewMode(mode: ViewMode) {
   }
 }
 
-view2dBtn?.addEventListener('click', () => setViewMode('2d'));
-view3dBtn?.addEventListener('click', () => setViewMode('3d'));
+view2dBtn?.addEventListener('click', () => {
+  setViewMode(viewAfterClick(viewMode, '2d'));
+});
+view3dBtn?.addEventListener('click', () => {
+  setViewMode(viewAfterClick(viewMode, '3d'));
+});
 
 mobileViewToggleBtn?.addEventListener('click', () => {
   setViewMode(viewMode === '2d' ? '3d' : '2d');
@@ -2153,7 +2217,9 @@ document.getElementById('display-options')?.addEventListener('change', function 
   const displayOption = (this as HTMLSelectElement).value;
   updateDisplay(displayOption);
 });
-updateDisplay('edges');
+const displayOptions = document.getElementById('display-options') as HTMLSelectElement | null;
+if (displayOptions) displayOptions.value = DEFAULT_DISPLAY_OPTION;
+updateDisplay(DEFAULT_DISPLAY_OPTION);
 
 if (simulationIntervalSlider) {
   simulationIntervalSlider.value = String(FAST_MS_DEFAULT);
@@ -2161,7 +2227,7 @@ if (simulationIntervalSlider) {
   simulationIntervalSlider.addEventListener('input', function () {
     fastMs = parseInt((this as HTMLInputElement).value, 10) || FAST_MS_DEFAULT;
     if (simulationIntervalLabel) simulationIntervalLabel.textContent = String(fastMs);
-    if (isSimulationRunning && !slowMode) {
+    if (isSimulationRunning) {
       clearInterval(simulationInterval);
       simulationInterval = setInterval(unfoldGraph, currentIntervalMs());
     }
@@ -2169,7 +2235,7 @@ if (simulationIntervalSlider) {
 }
 
 function currentIntervalMs() {
-  return slowMode ? SLOW_MS : (fastMs || FAST_MS_DEFAULT);
+  return playbackIntervalMs(fastMs || FAST_MS_DEFAULT, playbackSpeed);
 }
 
 setSimulationButtonState('start');
@@ -2192,15 +2258,22 @@ pauseResumeButton.addEventListener('click', () => {
 });
 
 document.getElementById('next-step-button')!.addEventListener('click', () => {
-  if (!isSimulationRunning) {
+  clearInterval(simulationInterval);
+  const canRunStep = !gumMachine.reachedMaxSteps();
+
+  if (canRunStep) {
     isSimulationRunning = true;
     unfoldGraph();
-    isSimulationRunning = false;
   }
+
+  isSimulationRunning = false;
+  setSimulationButtonState(gumMachine.reachedMaxSteps() ? 'start' : 'resume');
+  setControlsEnabled(true);
+  syncMobilePlayIcon();
 });
 
 slowBtn?.addEventListener('click', () => {
-  slowMode = !slowMode;
+  playbackSpeed = nextPlaybackSpeed(playbackSpeed);
   if (isSimulationRunning) {
     clearInterval(simulationInterval);
     simulationInterval = setInterval(unfoldGraph, currentIntervalMs());
@@ -2520,7 +2593,7 @@ loadColorOverridesFromStorage();
 
 loadGenesLibrary().then(() => {
 
-  setControlsEnabled(false);
+  setControlsEnabled(true);
   refreshMaxStepsInput();
   renderPaletteOpenCollapsed();
   initStateCombos();

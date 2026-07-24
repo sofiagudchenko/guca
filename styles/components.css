@@ -451,6 +451,12 @@ small {
   color: var(--color-canvas);
 }
 
+#slowdown-button,
+#slowdown-button.active {
+  background: var(--color-canvas);
+  color: var(--color-text);
+}
+
 .segmented-control {
   overflow: hidden;
   border: 1px solid var(--color-text);
@@ -475,6 +481,28 @@ small {
 .segment.active {
   background: var(--color-text);
   color: var(--color-canvas);
+}
+
+.graph-tools-control {
+  width: max-content;
+  justify-self: start;
+}
+
+.graph-tools-control .segment {
+  width: 78px;
+  min-width: 78px;
+  padding-inline: 0;
+}
+
+.graph-tools-control.is-3d {
+  border-color: var(--color-border-strong);
+}
+
+.graph-tools-control.is-3d #tool-move-button:disabled {
+  background: transparent;
+  color: var(--color-text);
+  cursor: default;
+  opacity: 1;
 }
 
 /* Modal (Genome Editor) */
