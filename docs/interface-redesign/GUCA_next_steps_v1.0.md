@@ -51,7 +51,7 @@ npm run start
 2. Новый выбор организмов по категориям.
 3. Постоянный блок Genome с плитками генов и Add gene.
 4. Модальный Genome Editor: Edit gene и New gene.
-5. New genome, Upload, Download.
+5. New genome, Upload, Download, Share.
 6. Play/Pause, Step, Reset, Speed, 2D/3D, Move/Cut.
 7. Перенос существующих настроек в Advanced.
 8. About и базовые сообщения об ошибках.
@@ -86,7 +86,7 @@ npm run build
 - запустить и остановить симуляцию;
 - выполнить 1 шаг;
 - добавить и изменить ген;
-- создать и скачать геном;
+- создать, скачать и поделиться геномом;
 - найти настройку в Advanced;
 - переключиться в 3D.
 
@@ -98,7 +98,6 @@ npm run build
 
 - Auto-pause;
 - Unsaved changes;
-- Share;
 - tooltips;
 - status messages;
 - mute/unmute;
