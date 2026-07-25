@@ -107,117 +107,124 @@
       <details class="advanced-shell">
         <summary>Advanced <span aria-hidden="true">›</span></summary>
         <div class="advanced-content">
-          <details class="block" id="visualization-block">
+          <details class="block advanced-subgroup" id="visualization-block">
             <summary>Appearance</summary>
-            <div class="form-row">
-              <label><input type="checkbox" id="face-fill-checkbox" /> Fill faces</label>
+            <div class="advanced-subgroup-content">
+              <div class="form-row">
+                <label><input type="checkbox" id="face-fill-checkbox" /> Fill faces</label>
+              </div>
+              <div class="form-row">
+                <label for="face-fill-opacity">Face opacity</label>
+                <input type="range" id="face-fill-opacity" min="0" max="0.8" step="0.05" value="0.25" />
+                <span id="face-fill-opacity-value">0.25</span>
+              </div>
+              <div class="form-row">
+                <label for="gradient-edges-checkbox">Gradient edges</label>
+                <input type="checkbox" id="gradient-edges-checkbox" checked />
+              </div>
+              <section class="appearance-palette" aria-labelledby="color-palette-heading">
+                <h4 id="color-palette-heading" class="advanced-subheading">Color palette</h4>
+                <div id="palette-grid" class="palette-grid" title="Hover a swatch to see its index and color name"></div>
+                <button id="reset-colors-button" class="secondary-button" type="button" title="Reset palette colors to default">
+                  Reset colors
+                </button>
+              </section>
             </div>
-            <div class="form-row">
-              <label for="face-fill-opacity">Face opacity</label>
-              <input type="range" id="face-fill-opacity" min="0" max="0.8" step="0.05" value="0.25" />
-              <span id="face-fill-opacity-value">0.25</span>
-            </div>
-            <div class="form-row">
-              <label for="gradient-edges-checkbox">Gradient edges</label>
-              <input type="checkbox" id="gradient-edges-checkbox" checked />
-            </div>
-            <button id="reset-colors-button" class="secondary-button" type="button" title="Reset palette colors to default">
-              Reset colors
-            </button>
           </details>
 
-          <section class="advanced-group" aria-labelledby="graph-behaviour-heading">
-            <h3 id="graph-behaviour-heading">Graph behaviour</h3>
-            <label><input type="checkbox" id="maintain-single-component" /> Maintain a single component</label>
-            <label><input type="checkbox" id="auto-center-checkbox" checked /> Smooth auto-center</label>
-            <label><input type="checkbox" id="auto-scale-checkbox" checked /> Smooth auto-scale</label>
-          </section>
+          <details class="block advanced-subgroup" id="graph-behaviour-block">
+            <summary>Graph behaviour</summary>
+            <div class="advanced-subgroup-content">
+              <label><input type="checkbox" id="maintain-single-component" /> Maintain a single component</label>
+              <label><input type="checkbox" id="auto-center-checkbox" checked /> Smooth auto-center</label>
+              <label><input type="checkbox" id="auto-scale-checkbox" checked /> Smooth auto-scale</label>
+            </div>
+          </details>
 
-          <details class="block" id="settings-block">
+          <details class="block advanced-subgroup" id="settings-block">
             <summary>Simulation</summary>
-            <div class="form-row">
-              <label for="max-steps-input">Maximum iterations</label>
-              <input id="max-steps-input" type="number" value="120" min="-1" step="1" />
-              <small>-1 = unlimited</small>
-            </div>
-            <div class="form-row">
-              <label for="max-vertices-input" title="Maximum number of nodes allowed. 0 = unlimited.">Maximum vertices</label>
-              <input id="max-vertices-input" type="number" value="200" min="0" step="1" />
-              <small>0 = unlimited</small>
-            </div>
-            <div class="form-row">
-              <label for="simulation-interval">Iteration interval</label>
-              <input type="range" id="simulation-interval" min="50" max="2000" value="100" />
-              <span><span id="simulation-interval-value">100</span> ms</span>
-            </div>
-            <div class="form-row">
-              <label for="nearest-max-depth-input">Nearest search depth</label>
-              <input id="nearest-max-depth-input" type="number" value="2" min="0" step="1" />
-            </div>
-            <div class="form-row">
-              <label for="topology-semantics-select">Topology semantics</label>
-              <select id="topology-semantics-select">
-                <option value="snapshot">snapshot (CA-like)</option>
-                <option value="live">live (legacy)</option>
-              </select>
-            </div>
-            <label><input type="checkbox" id="orphan-cleanup-checkbox" /> Auto-dissolve detached subgraphs</label>
-            <label><input type="checkbox" id="reseed-isolated-a-checkbox" checked /> Reseed isolated A nodes as new roots</label>
-          </details>
-
-          <details class="block" id="advanced-block">
-            <summary>Dev tools (debug)</summary>
-            <div class="form-row">
-              <label for="display-options">Display</label>
-              <select id="display-options">
-                <option value="edges">Edges</option>
-                <option value="nodes">Nodes</option>
-                <option value="both" selected>Nodes &amp; edges</option>
-              </select>
-            </div>
-            <div class="control-buttons">
-              <button id="connect-button" type="button">Connect</button>
-              <label for="source-node">Source</label>
-              <select id="source-node"></select>
-              <label for="target-node">Target</label>
-              <select id="target-node"></select>
-            </div>
-            <div class="control-buttons">
-              <button id="add-node-button" type="button">Add node</button>
-              <label for="node-state">State</label>
-              <select id="node-state"></select>
-            </div>
-            <div class="control-buttons">
-              <button id="remove-node-button" type="button">Remove node</button>
-              <label for="remove-node-id">Node ID</label>
-              <select id="remove-node-id"></select>
-            </div>
-            <div class="control-buttons">
-              <button id="change-node-state-button" type="button">Change node state</button>
-              <label for="change-node-id">Node</label>
-              <select id="change-node-id"></select>
-              <label for="change-node-state">State</label>
-              <select id="change-node-state"></select>
-            </div>
-            <div class="control-buttons">
-              <button id="disconnect-button" type="button">Disconnect</button>
-              <label for="disconnect-source-node">Source</label>
-              <select id="disconnect-source-node"></select>
-              <label for="disconnect-target-node">Target</label>
-              <select id="disconnect-target-node"></select>
-            </div>
-            <div class="control-buttons">
-              <button id="connect-nearest-button" type="button">Connect nearest</button>
-              <label for="connect-nearest-node">Node</label>
-              <select id="connect-nearest-node"></select>
-              <label for="connect-nearest-state">State</label>
-              <select id="connect-nearest-state"></select>
+            <div class="advanced-subgroup-content">
+              <div class="form-row">
+                <label for="max-steps-input">Maximum iterations</label>
+                <input id="max-steps-input" type="number" value="120" min="-1" step="1" />
+                <small>-1 = unlimited</small>
+              </div>
+              <div class="form-row">
+                <label for="max-vertices-input" title="Maximum number of nodes allowed. 0 = unlimited.">Maximum vertices</label>
+                <input id="max-vertices-input" type="number" value="200" min="0" step="1" />
+                <small>0 = unlimited</small>
+              </div>
+              <div class="form-row">
+                <label for="simulation-interval">Iteration interval</label>
+                <input type="range" id="simulation-interval" min="50" max="2000" value="100" />
+                <span><span id="simulation-interval-value">100</span> ms</span>
+              </div>
+              <div class="form-row">
+                <label for="nearest-max-depth-input">Nearest search depth</label>
+                <input id="nearest-max-depth-input" type="number" value="2" min="0" step="1" />
+              </div>
+              <div class="form-row">
+                <label for="topology-semantics-select">Topology semantics</label>
+                <select id="topology-semantics-select">
+                  <option value="snapshot">snapshot (CA-like)</option>
+                  <option value="live">live (legacy)</option>
+                </select>
+              </div>
+              <label><input type="checkbox" id="orphan-cleanup-checkbox" /> Auto-dissolve detached subgraphs</label>
+              <label><input type="checkbox" id="reseed-isolated-a-checkbox" checked /> Reseed isolated A nodes as new roots</label>
             </div>
           </details>
 
-          <details class="block" id="palette-block">
-            <summary role="button" tabindex="0">Color palette (debug)</summary>
-            <div id="palette-grid" class="palette-grid" title="Hover a swatch to see its index and color name"></div>
+          <details class="block advanced-subgroup" id="advanced-block">
+            <summary>Dev tools</summary>
+            <div class="advanced-subgroup-content">
+              <div class="form-row">
+                <label for="display-options">Display</label>
+                <select id="display-options">
+                  <option value="edges">Edges</option>
+                  <option value="nodes">Nodes</option>
+                  <option value="both" selected>Nodes &amp; edges</option>
+                </select>
+              </div>
+              <div class="control-buttons">
+                <button id="connect-button" type="button">Connect</button>
+                <label for="source-node">Source</label>
+                <select id="source-node"></select>
+                <label for="target-node">Target</label>
+                <select id="target-node"></select>
+              </div>
+              <div class="control-buttons">
+                <button id="add-node-button" type="button">Add node</button>
+                <label for="node-state">State</label>
+                <select id="node-state"></select>
+              </div>
+              <div class="control-buttons">
+                <button id="remove-node-button" type="button">Remove node</button>
+                <label for="remove-node-id">Node ID</label>
+                <select id="remove-node-id"></select>
+              </div>
+              <div class="control-buttons">
+                <button id="change-node-state-button" type="button">Change node state</button>
+                <label for="change-node-id">Node</label>
+                <select id="change-node-id"></select>
+                <label for="change-node-state">State</label>
+                <select id="change-node-state"></select>
+              </div>
+              <div class="control-buttons">
+                <button id="disconnect-button" type="button">Disconnect</button>
+                <label for="disconnect-source-node">Source</label>
+                <select id="disconnect-source-node"></select>
+                <label for="disconnect-target-node">Target</label>
+                <select id="disconnect-target-node"></select>
+              </div>
+              <div class="control-buttons">
+                <button id="connect-nearest-button" type="button">Connect nearest</button>
+                <label for="connect-nearest-node">Node</label>
+                <select id="connect-nearest-node"></select>
+                <label for="connect-nearest-state">State</label>
+                <select id="connect-nearest-state"></select>
+              </div>
+            </div>
           </details>
 
           <button id="sound-toggle-button" class="secondary-button" type="button" title="Toggle mechanical ticking sound">

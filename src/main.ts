@@ -2165,24 +2165,18 @@ function renderPaletteGrid() {
 
 
 
-function wireDetailsToggle(detailsId: string) {
-  const det = document.getElementById(detailsId) as HTMLDetailsElement | null;
-  if (!det) return;
-  const summary = det.querySelector('summary');
-  if (!summary) return;
+function wireAdvancedAccordion() {
+  const groups = Array.from(
+    document.querySelectorAll<HTMLDetailsElement>('.advanced-subgroup')
+  );
 
-  summary.addEventListener('click', (e) => {
-    const el = e.target as HTMLElement;
-    if (el.closest('a,button,input,select,textarea,label')) return;
-    e.preventDefault();
-    det.open = !det.open;
-  });
-
-  summary.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      det.open = !det.open;
-    }
+  groups.forEach((group) => {
+    group.addEventListener('toggle', () => {
+      if (!group.open) return;
+      groups.forEach((other) => {
+        if (other !== group) other.open = false;
+      });
+    });
   });
 }
 
@@ -2728,11 +2722,8 @@ function resetGraph() {
    15) PALETTE / DETAILS INIT + BOOT
    ========================================================================= */
 
-function renderPaletteOpenCollapsed() {
+function renderPalette() {
   renderPaletteGrid();
-  wireDetailsToggle('palette-block');
-  const det = document.getElementById('palette-block') as HTMLDetailsElement | null;
-  if (det) det.open = true; // keep existing behavior
 }
 
 
@@ -2746,11 +2737,13 @@ function initStateCombos() {
 // Restore any saved per-state colors before we build the initial graph
 loadColorOverridesFromStorage();
 
+wireAdvancedAccordion();
+
 loadGenesLibrary().then(() => {
 
   setControlsEnabled(true);
   refreshMaxStepsInput();
-  renderPaletteOpenCollapsed();
+  renderPalette();
   initStateCombos();
   applyResponsiveMode();
   syncMobilePlayIcon();
