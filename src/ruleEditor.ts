@@ -345,12 +345,6 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
     d.closeBtn.addEventListener('click', close);
     d.cancelBtn.addEventListener('click', close);
 
-    // backdrop click closes (your HTML uses data-close="1" on backdrop)
-    d.modal.addEventListener('click', (e) => {
-      const t = e.target as HTMLElement;
-      if (t?.dataset?.close === '1') close();
-    });
-
     // ESC closes
     document.addEventListener('keydown', (e) => {
       const dd = dom();
