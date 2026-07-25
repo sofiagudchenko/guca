@@ -893,6 +893,7 @@ function syncGenomeSelects(value: string) {
   if (desktop) desktop.value = value;
   if (mobile) mobile.value = value;
   syncingGenomeSelect = false;
+  syncOrganismPickerUi(value);
 }
 
 function setShareHash(token: string | null) {
@@ -1006,28 +1007,49 @@ const ruleEditor = createRuleEditorController({
    9) GENOME CATALOG / LOADING / EXPORT
    ========================================================================= */
 
-const YAML_CATALOG = [
-  
-  { name: 'Dumbbell', path: 'data/genoms/dumbbell.yaml' },
-  { name: 'Hairy Circle', path: 'data/genoms/hairy_circle_genom.yaml' },  
-  { name: 'Dumbbell and Hairy Circle Hybrid', path: 'data/genoms/dumbbell_and_hairy_circle_hybrid.yaml' },    
-  { name: 'Triangle Mesh', path: 'data/genoms/exp005_trimesh_genom.yaml' },
-  { name: 'Quad Mesh', path: 'data/genoms/quadmesh.yaml' },
-  { name: 'LLM Manual Butterfly', path: 'data/genoms/visual_butterfly_manual.yaml' },
-  { name: 'Hexagon replicator', path: 'data/genoms/hexagon_replicator.yaml' },  
-  { name: 'Strange Figure #1', path: 'data/genoms/strange_figure1_genom.yaml' },
-  { name: 'Strange Figure #2', path: 'data/genoms/strange_figure2_genom.yaml' },  
-  { name: 'fractal-3', path: 'data/genoms/fractal3_genom.yaml' },
-  { name: 'two_wheels', path: 'data/genoms/two_wheels.yaml' },
-  { name: "Conway's 'Life'", path: 'data/genoms/conways_game_of_life.yaml' },
-  { name: "Conway's 'Life' (Cylinder)", path: 'data/genoms/conways_game_of_life_diagonal_cylinder.yaml' },
-  { name: "Conway's 'Life' (Torus)", path: 'data/genoms/conways_game_of_life_torus.yaml' },
-  { name: "Conway's 'Life' + spikes ", path: 'data/genoms/conways_game_of_life_torus_with_spikes.yaml' },
-  { name: "Brians Brain CA + spikes ", path: 'data/genoms/brians_brain_CA_torus_with_spikes.yaml' },
-  { name: "Moving Hole Particle", path: 'data/genoms/moving_hole_particle.yaml' },
-  // { name: "Moving Density Particle", path: 'data/genoms/moving_density_particle.yaml' },
-  { name: 'New (empty)', path: 'data/genoms/empty.yaml' }, 
+const GENOME_CATEGORIES = [
+  'Manual',
+  'Evolution',
+  'Cellular Automata',
+  'LLM',
+] as const;
+
+type GenomeCategory = typeof GENOME_CATEGORIES[number];
+
+type GenomeCatalogEntry = {
+  name: string;
+  path: string;
+  category: GenomeCategory;
+  showInPicker?: boolean;
+};
+
+const YAML_CATALOG: GenomeCatalogEntry[] = [
+  { name: 'Dumbbell', path: 'data/genoms/dumbbell.yaml', category: 'Manual' },
+  { name: 'Hairy Circle', path: 'data/genoms/hairy_circle_genom.yaml', category: 'Manual' },
+  { name: 'Hex replicator', path: 'data/genoms/hexagon_replicator.yaml', category: 'Manual' },
+  { name: 'Fractal', path: 'data/genoms/fractal3_genom.yaml', category: 'Manual' },
+  { name: 'Two wheels', path: 'data/genoms/two_wheels.yaml', category: 'Manual' },
+
+  { name: 'Dumbbell and Hairy Circle Hybrid', path: 'data/genoms/dumbbell_and_hairy_circle_hybrid.yaml', category: 'Evolution' },
+  { name: 'Triangle Mesh', path: 'data/genoms/exp005_trimesh_genom.yaml', category: 'Evolution' },
+  { name: 'Quad Mesh', path: 'data/genoms/quadmesh.yaml', category: 'Evolution' },
+  { name: 'Strange Figure #1', path: 'data/genoms/strange_figure1_genom.yaml', category: 'Evolution' },
+  { name: 'Strange Figure #2', path: 'data/genoms/strange_figure2_genom.yaml', category: 'Evolution' },
+
+  { name: "Conway's Life", path: 'data/genoms/conways_game_of_life.yaml', category: 'Cellular Automata' },
+  { name: "Conway's Life (Cylinder)", path: 'data/genoms/conways_game_of_life_diagonal_cylinder.yaml', category: 'Cellular Automata' },
+  { name: "Conway's Life (Torus)", path: 'data/genoms/conways_game_of_life_torus.yaml', category: 'Cellular Automata' },
+  { name: "Conway's Life + spikes", path: 'data/genoms/conways_game_of_life_torus_with_spikes.yaml', category: 'Cellular Automata' },
+  { name: "Brian's Brain + spikes", path: 'data/genoms/brians_brain_CA_torus_with_spikes.yaml', category: 'Cellular Automata' },
+  { name: 'Moving Hole Particle', path: 'data/genoms/moving_hole_particle.yaml', category: 'Cellular Automata' },
+  // { name: 'Moving Density Particle', path: 'data/genoms/moving_density_particle.yaml', category: 'Cellular Automata' },
+
+  { name: 'Butterfly', path: 'data/genoms/visual_butterfly_manual.yaml', category: 'LLM' },
+
+  { name: 'New (empty)', path: 'data/genoms/empty.yaml', category: 'Manual', showInPicker: false },
 ];
+
+let syncOrganismPickerUi: (value: string) => void = () => {};
 
 async function fetchYaml(path: string): Promise<any> {
   const txt = await (await fetch(path)).text();
@@ -1043,12 +1065,30 @@ async function loadGenesLibrary() {
   const fillCatalogOptions = (sel: HTMLSelectElement | null) => {
     if (!sel) return;
     sel.innerHTML = '';
-    YAML_CATALOG.forEach(({ name, path }) => {
-      const opt = document.createElement('option');
-      opt.value = path;
-      opt.text = name;
-      sel.add(opt);
+    GENOME_CATEGORIES.forEach((category) => {
+      const group = document.createElement('optgroup');
+      group.label = category;
+      group.dataset.category = category;
+      YAML_CATALOG
+        .filter(entry => entry.category === category && entry.showInPicker !== false)
+        .forEach(({ name, path }) => {
+          const opt = document.createElement('option');
+          opt.value = path;
+          opt.text = name;
+          group.appendChild(opt);
+        });
+      sel.appendChild(group);
     });
+
+    YAML_CATALOG
+      .filter(entry => entry.showInPicker === false)
+      .forEach(({ name, path }) => {
+        const opt = document.createElement('option');
+        opt.value = path;
+        opt.text = name;
+        opt.hidden = true;
+        sel.appendChild(opt);
+      });
   };
 
   fillCatalogOptions(geneSelect);
@@ -1074,6 +1114,119 @@ async function loadGenesLibrary() {
     baseGenomeLabel = YAML_CATALOG.find(x => x.path === value)?.name ?? 'Genome';
     await loadGenomFromYaml(value);
   };
+
+  const pickerTrigger = document.getElementById('organism-picker-trigger') as HTMLButtonElement | null;
+  const pickerValue = document.getElementById('organism-picker-value');
+  const pickerMenu = document.getElementById('organism-picker-menu');
+  let openCategory: GenomeCategory | null = 'Manual';
+
+  const categoryForValue = (value: string): GenomeCategory => {
+    if (value === GENOME_SELECT_VALUES.CUSTOM) return 'Manual';
+    return YAML_CATALOG.find(entry => entry.path === value)?.category ?? 'Manual';
+  };
+
+  const pickerEntries = (category: GenomeCategory): Array<{ name: string; path: string }> => {
+    const entries = YAML_CATALOG
+      .filter(entry => entry.category === category && entry.showInPicker !== false)
+      .map(({ name, path }) => ({ name, path }));
+
+    if (category === 'Manual') {
+      const custom = geneSelect.querySelector('option[data-custom="1"]') as HTMLOptionElement | null;
+      if (custom) entries.unshift({ name: custom.text, path: custom.value });
+    }
+
+    return entries;
+  };
+
+  const renderOrganismPicker = () => {
+    if (!pickerMenu) return;
+    pickerMenu.innerHTML = '';
+    const selectedValue = geneSelect.value;
+    const selectedCategory = categoryForValue(selectedValue);
+
+    GENOME_CATEGORIES.forEach((category) => {
+      const categoryEl = document.createElement('div');
+      categoryEl.className = 'organism-category';
+
+      const categoryButton = document.createElement('button');
+      categoryButton.type = 'button';
+      categoryButton.className = 'organism-category-button';
+      categoryButton.classList.toggle('current-category', category === selectedCategory);
+      categoryButton.setAttribute('aria-expanded', category === openCategory ? 'true' : 'false');
+
+      const categoryLabel = document.createElement('span');
+      categoryLabel.textContent = category;
+      categoryButton.appendChild(categoryLabel);
+
+      const categoryChevron = document.createElement('span');
+      categoryChevron.className = 'organism-category-chevron';
+      categoryChevron.setAttribute('aria-hidden', 'true');
+      categoryChevron.textContent = '›';
+      categoryButton.appendChild(categoryChevron);
+
+      categoryButton.addEventListener('click', () => {
+        openCategory = openCategory === category ? null : category;
+        renderOrganismPicker();
+      });
+      categoryEl.appendChild(categoryButton);
+
+      if (category === openCategory) {
+        const optionsEl = document.createElement('div');
+        optionsEl.className = 'organism-category-options';
+        optionsEl.setAttribute('role', 'group');
+        optionsEl.setAttribute('aria-label', category);
+
+        pickerEntries(category).forEach(({ name, path }) => {
+          const optionButton = document.createElement('button');
+          optionButton.type = 'button';
+          optionButton.className = 'organism-option-button';
+          optionButton.textContent = name;
+          optionButton.dataset.value = path;
+          if (path === selectedValue) optionButton.setAttribute('aria-current', 'true');
+          optionButton.addEventListener('click', () => {
+            syncGenomeSelects(path);
+            setOrganismPickerOpen(false);
+            void handleGenomeSelection(path);
+          });
+          optionsEl.appendChild(optionButton);
+        });
+
+        categoryEl.appendChild(optionsEl);
+      }
+
+      pickerMenu.appendChild(categoryEl);
+    });
+  };
+
+  const setOrganismPickerOpen = (open: boolean) => {
+    if (!pickerTrigger || !pickerMenu) return;
+    pickerTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    pickerMenu.hidden = !open;
+    if (open) {
+      openCategory = categoryForValue(geneSelect.value);
+      renderOrganismPicker();
+    }
+  };
+
+  syncOrganismPickerUi = (value: string) => {
+    const selectedOption = Array.from(geneSelect.options).find(option => option.value === value);
+    if (pickerValue) pickerValue.textContent = selectedOption?.text ?? 'Choose';
+    openCategory = categoryForValue(value);
+    renderOrganismPicker();
+  };
+
+  pickerTrigger?.addEventListener('click', () => {
+    setOrganismPickerOpen(pickerTrigger.getAttribute('aria-expanded') !== 'true');
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && pickerTrigger?.getAttribute('aria-expanded') === 'true') {
+      setOrganismPickerOpen(false);
+      pickerTrigger.focus();
+    }
+  });
+
+  syncOrganismPickerUi(geneSelect.value);
 
   const wireSelect = (sel: HTMLSelectElement | null) => {
     if (!sel) return;
@@ -1185,7 +1338,9 @@ async function applyGenomConfig(cfg: any, labelForSelect: string | null) {
       if (!opt) {
         opt = document.createElement('option');
         opt.setAttribute('data-custom', '1');
-        sel.insertBefore(opt, sel.firstChild);
+        const manualGroup = sel.querySelector('optgroup[data-category="Manual"]');
+        if (manualGroup) manualGroup.insertBefore(opt, manualGroup.firstChild);
+        else sel.insertBefore(opt, sel.firstChild);
       }
       opt.value = GENOME_SELECT_VALUES.CUSTOM;
       opt.text = `Custom: ${labelForSelect}`;

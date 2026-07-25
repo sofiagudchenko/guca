@@ -47,9 +47,26 @@
           <h2 class="sidebar-heading">Organism</h2>
           <button id="new-genome-button" class="sidebar-add-button" type="button" aria-label="Create a new genome" title="Create a new genome">+</button>
         </div>
-        <label class="visually-hidden" for="gene-select">Choose organism</label>
-        <div class="organism-select-wrap">
-          <select id="gene-select" aria-label="Organism"></select>
+        <div id="organism-picker" class="organism-picker">
+          <span id="organism-picker-label" class="visually-hidden">Choose organism</span>
+          <button
+            id="organism-picker-trigger"
+            class="organism-picker-trigger"
+            type="button"
+            aria-expanded="false"
+            aria-controls="organism-picker-menu"
+            aria-labelledby="organism-picker-label organism-picker-value"
+          >
+            <span id="organism-picker-value">Dumbbell</span>
+            <span class="organism-picker-chevron" aria-hidden="true">›</span>
+          </button>
+          <div
+            id="organism-picker-menu"
+            class="organism-picker-menu"
+            aria-label="Organism categories"
+            hidden
+          ></div>
+          <select id="gene-select" aria-hidden="true" tabindex="-1"></select>
         </div>
       </section>
 
