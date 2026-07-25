@@ -199,8 +199,10 @@ const FIT_PARAMS = {
   defaultK: 1,
 };
 
+const EMPTY_GENOME_PATH = 'data/genoms/empty.yaml';
+
 const GENOME_SELECT_VALUES = {
-  NEW: '__new__',
+  NEW: EMPTY_GENOME_PATH,
   CUSTOM: '__custom__',
 } as const;
 
@@ -896,6 +898,16 @@ function syncGenomeSelects(value: string) {
   syncOrganismPickerUi(value);
 }
 
+function setGenomeSelectLabel(value: string, label: string) {
+  const update = (select: HTMLSelectElement | null) => {
+    const option = Array.from(select?.options ?? []).find(item => item.value === value);
+    if (option) option.text = label;
+  };
+
+  update(document.getElementById('gene-select') as HTMLSelectElement | null);
+  update(document.getElementById('gene-select-mobile') as HTMLSelectElement | null);
+}
+
 function setShareHash(token: string | null) {
   const base = `${window.location.pathname}${window.location.search}`;
   const next = token ? `${base}#g=${encodeURIComponent(token)}` : base;
@@ -997,6 +1009,7 @@ const ruleEditor = createRuleEditorController({
 
   setCustomGenomeCache: (cfg) => { customGenomeCache = cfg; },
   syncGenomeSelects,
+  setGenomeSelectLabel,
   genomeSelectValues: GENOME_SELECT_VALUES,
 
   applyGenomeConfig: applyGenomConfig,
@@ -1046,7 +1059,7 @@ const YAML_CATALOG: GenomeCatalogEntry[] = [
 
   { name: 'Butterfly', path: 'data/genoms/visual_butterfly_manual.yaml', category: 'LLM' },
 
-  { name: 'New (empty)', path: 'data/genoms/empty.yaml', category: 'Manual', showInPicker: false },
+  { name: 'New', path: EMPTY_GENOME_PATH, category: 'Manual', showInPicker: false },
 ];
 
 let syncOrganismPickerUi: (value: string) => void = () => {};
@@ -1123,6 +1136,10 @@ async function loadGenesLibrary() {
   const categoryForValue = (value: string): GenomeCategory => {
     if (value === GENOME_SELECT_VALUES.CUSTOM) return 'Manual';
     return YAML_CATALOG.find(entry => entry.path === value)?.category ?? 'Manual';
+  };
+
+  const defaultOpenCategoryForValue = (value: string): GenomeCategory | null => {
+    return value === GENOME_SELECT_VALUES.NEW ? null : categoryForValue(value);
   };
 
   const pickerEntries = (category: GenomeCategory): Array<{ name: string; path: string }> => {
@@ -1203,7 +1220,7 @@ async function loadGenesLibrary() {
     pickerTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     pickerMenu.hidden = !open;
     if (open) {
-      openCategory = categoryForValue(geneSelect.value);
+      openCategory = defaultOpenCategoryForValue(geneSelect.value);
       renderOrganismPicker();
     }
   };
@@ -1211,7 +1228,7 @@ async function loadGenesLibrary() {
   syncOrganismPickerUi = (value: string) => {
     const selectedOption = Array.from(geneSelect.options).find(option => option.value === value);
     if (pickerValue) pickerValue.textContent = selectedOption?.text ?? 'Choose';
-    openCategory = categoryForValue(value);
+    openCategory = defaultOpenCategoryForValue(value);
     renderOrganismPicker();
   };
 
@@ -1244,10 +1261,11 @@ async function loadGenesLibrary() {
   wireSelect(mobileSelect);
 
   document.getElementById('new-genome-button')?.addEventListener('click', () => {
-    const emptyGenomePath = 'data/genoms/empty.yaml';
-    geneSelect.value = emptyGenomePath;
-    syncGenomeSelects(emptyGenomePath);
-    void handleGenomeSelection(emptyGenomePath);
+    currentGenomeSource = 'new';
+    baseGenomeLabel = 'New';
+    setGenomeSelectLabel(GENOME_SELECT_VALUES.NEW, 'New');
+    syncGenomeSelects(GENOME_SELECT_VALUES.NEW);
+    void loadGenomFromYaml(GENOME_SELECT_VALUES.NEW);
   });
   
 

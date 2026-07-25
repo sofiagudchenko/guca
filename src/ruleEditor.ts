@@ -47,6 +47,7 @@ export interface RuleEditorDeps {
 
   setCustomGenomeCache(cfg: any | null): void;
   syncGenomeSelects(value: string): void;
+  setGenomeSelectLabel(value: string, label: string): void;
   genomeSelectValues: { CUSTOM: string; NEW: string };
 
   applyGenomeConfig(cfg: any, labelForSelect: string | null): Promise<void>;
@@ -313,16 +314,17 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
 
     deps.clearShareHashIfPresent();
 
-    const shouldCustom = deps.getCurrentGenomeSource() !== 'new';
-    const label = shouldCustom ? `Edited: ${deps.getBaseGenomeLabel()}` : null;
+    const isNewGenome = deps.getCurrentGenomeSource() === 'new';
+    const label = isNewGenome ? null : `Edited: ${deps.getBaseGenomeLabel()}`;
 
     await deps.applyGenomeConfig(nextCfg, label);
 
-    if (shouldCustom) {
+    if (isNewGenome) {
+      deps.setGenomeSelectLabel(deps.genomeSelectValues.NEW, 'New (edited)');
+      deps.syncGenomeSelects(deps.genomeSelectValues.NEW);
+    } else {
       deps.setCustomGenomeCache(deepClone(deps.getLastLoadedConfig()));
       deps.syncGenomeSelects(deps.genomeSelectValues.CUSTOM);
-    } else {
-      deps.syncGenomeSelects(deps.genomeSelectValues.NEW);
     }
 
     deps.showToast('Rule table updated — simulation reset.');
