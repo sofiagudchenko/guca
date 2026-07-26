@@ -1,6 +1,7 @@
 // src/ruleEditor.ts
 import { NodeState, OperationKindEnum, RuleItem } from './gum';
 import { mapOperationKindToString } from './utils';
+import { getEditedGenomeLabel } from './genomePicker';
 
 export type RuleEditorMode = 'add' | 'edit';
 
@@ -46,6 +47,7 @@ export interface RuleEditorDeps {
   getBaseGenomeLabel(): string;
 
   setCustomGenomeCache(cfg: any | null): void;
+  setNewGenomeCache(cfg: any | null): void;
   syncGenomeSelects(value: string): void;
   setGenomeSelectLabel(value: string, label: string): void;
   genomeSelectValues: { CUSTOM: string; NEW: string };
@@ -314,13 +316,15 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
 
     deps.clearShareHashIfPresent();
 
-    const isNewGenome = deps.getCurrentGenomeSource() === 'new';
-    const label = isNewGenome ? null : `Edited: ${deps.getBaseGenomeLabel()}`;
+    const genomeSource = deps.getCurrentGenomeSource();
+    const isNewGenome = genomeSource === 'new';
+    const editedLabel = getEditedGenomeLabel(genomeSource, deps.getBaseGenomeLabel());
 
-    await deps.applyGenomeConfig(nextCfg, label);
+    await deps.applyGenomeConfig(nextCfg, isNewGenome ? null : editedLabel);
 
     if (isNewGenome) {
-      deps.setGenomeSelectLabel(deps.genomeSelectValues.NEW, 'New (edited)');
+      deps.setNewGenomeCache(deepClone(deps.getLastLoadedConfig()));
+      deps.setGenomeSelectLabel(deps.genomeSelectValues.NEW, editedLabel);
       deps.syncGenomeSelects(deps.genomeSelectValues.NEW);
     } else {
       deps.setCustomGenomeCache(deepClone(deps.getLastLoadedConfig()));

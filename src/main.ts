@@ -33,6 +33,10 @@ import { shouldUseMobileBasic } from './responsive';
 import { createGraph3DController } from './graph3d';
 import { encodeGenomeToUrlToken, parseGenomeFromUrlHash } from './shareGenome';
 import { createRuleEditorController } from './ruleEditor';
+import {
+  CUSTOM_GENOME_CATEGORY,
+  getGenomePickerCategories,
+} from './genomePicker';
 import { formatNodeInspectorText } from './nodeInspector';
 import { edgeGradientId, shouldUseGradientEdge } from './edgeGradients';
 import { DetectedFace, detectFaces } from './faceDetection';
@@ -213,6 +217,9 @@ let currentGenomeSource: GenomeSource = 'catalog';
 let baseGenomeLabel = 'Genome';
 
 let customGenomeCache: any | null = null;
+let customGenomeSource: GenomeSource = 'custom';
+let customGenomeBaseLabel = 'Custom';
+let newGenomeCache: any | null = null;
 let syncingGenomeSelect = false;
 
 
@@ -1005,6 +1012,7 @@ const ruleEditor = createRuleEditorController({
   getBaseGenomeLabel: () => baseGenomeLabel,
 
   setCustomGenomeCache: (cfg) => { customGenomeCache = cfg; },
+  setNewGenomeCache: (cfg) => { newGenomeCache = cfg; },
   syncGenomeSelects,
   setGenomeSelectLabel,
   genomeSelectValues: GENOME_SELECT_VALUES,
@@ -1025,6 +1033,7 @@ const GENOME_CATEGORIES = [
 ] as const;
 
 type GenomeCategory = typeof GENOME_CATEGORIES[number];
+type GenomePickerCategory = GenomeCategory | typeof CUSTOM_GENOME_CATEGORY;
 
 type GenomeCatalogEntry = {
   name: string;
@@ -1072,6 +1081,35 @@ async function loadGenesLibrary() {
 
   const mobileSelect = document.getElementById('gene-select-mobile') as HTMLSelectElement | null;
 
+  const ensureCustomGroup = (sel: HTMLSelectElement): HTMLOptGroupElement => {
+    let group = sel.querySelector(
+      `optgroup[data-category="${CUSTOM_GENOME_CATEGORY}"]`
+    ) as HTMLOptGroupElement | null;
+
+    if (!group) {
+      group = document.createElement('optgroup');
+      group.label = CUSTOM_GENOME_CATEGORY;
+      group.dataset.category = CUSTOM_GENOME_CATEGORY;
+      sel.insertBefore(group, sel.firstChild);
+    }
+
+    return group;
+  };
+
+  const revealNewGenomeOption = (sel: HTMLSelectElement | null, label: string) => {
+    if (!sel) return;
+    const option = Array.from(sel.options).find(
+      item => item.value === GENOME_SELECT_VALUES.NEW
+    );
+    if (!option) return;
+
+    option.hidden = false;
+    option.text = label;
+    option.dataset.customKind = 'new';
+    const customGroup = ensureCustomGroup(sel);
+    customGroup.insertBefore(option, customGroup.firstChild);
+  };
+
   const fillCatalogOptions = (sel: HTMLSelectElement | null) => {
     if (!sel) return;
     sel.innerHTML = '';
@@ -1097,6 +1135,7 @@ async function loadGenesLibrary() {
         opt.value = path;
         opt.text = name;
         opt.hidden = true;
+        opt.dataset.customKind = 'new';
         sel.appendChild(opt);
       });
   };
@@ -1107,12 +1146,25 @@ async function loadGenesLibrary() {
   if (mobileSelect) mobileSelect.value = geneSelect.value;
 
   const handleGenomeSelection = async (value: string) => {
+    if (value === GENOME_SELECT_VALUES.NEW) {
+      clearShareHashIfPresent();
+      currentGenomeSource = 'new';
+      baseGenomeLabel = 'New';
+      if (newGenomeCache) {
+        await applyGenomConfig(deepClone(newGenomeCache), null);
+      } else {
+        await loadGenomFromYaml(GENOME_SELECT_VALUES.NEW);
+      }
+      return;
+    }
+
     // "Custom" option (added by upload/share/editor)
     if (value === GENOME_SELECT_VALUES.CUSTOM) {
       // If we have a cached custom genome, restore it instead of fetching a file.
       if (customGenomeCache) {
         clearShareHashIfPresent();
-        currentGenomeSource = 'custom';
+        currentGenomeSource = customGenomeSource;
+        baseGenomeLabel = customGenomeBaseLabel;
         await applyGenomConfig(deepClone(customGenomeCache), null);
       }
       return;
@@ -1128,28 +1180,34 @@ async function loadGenesLibrary() {
   const pickerTrigger = document.getElementById('organism-picker-trigger') as HTMLButtonElement | null;
   const pickerValue = document.getElementById('organism-picker-value');
   const pickerMenu = document.getElementById('organism-picker-menu');
-  let openCategory: GenomeCategory | null = 'Manual';
+  let openCategory: GenomePickerCategory | null = 'Manual';
 
-  const categoryForValue = (value: string): GenomeCategory => {
-    if (value === GENOME_SELECT_VALUES.CUSTOM) return 'Manual';
+  const categoryForValue = (value: string): GenomePickerCategory => {
+    if (
+      value === GENOME_SELECT_VALUES.CUSTOM
+      || value === GENOME_SELECT_VALUES.NEW
+    ) {
+      return CUSTOM_GENOME_CATEGORY;
+    }
     return YAML_CATALOG.find(entry => entry.path === value)?.category ?? 'Manual';
   };
 
-  const defaultOpenCategoryForValue = (value: string): GenomeCategory | null => {
-    return value === GENOME_SELECT_VALUES.NEW ? null : categoryForValue(value);
-  };
+  const defaultOpenCategoryForValue = (value: string): GenomePickerCategory =>
+    categoryForValue(value);
 
-  const pickerEntries = (category: GenomeCategory): Array<{ name: string; path: string }> => {
-    const entries = YAML_CATALOG
-      .filter(entry => entry.category === category && entry.showInPicker !== false)
-      .map(({ name, path }) => ({ name, path }));
-
-    if (category === 'Manual') {
-      const custom = geneSelect.querySelector('option[data-custom="1"]') as HTMLOptionElement | null;
-      if (custom) entries.unshift({ name: custom.text, path: custom.value });
+  const pickerEntries = (category: GenomePickerCategory): Array<{ name: string; path: string }> => {
+    if (category === CUSTOM_GENOME_CATEGORY) {
+      const group = geneSelect.querySelector(
+        `optgroup[data-category="${CUSTOM_GENOME_CATEGORY}"]`
+      );
+      return Array.from(group?.querySelectorAll('option') ?? [])
+        .filter(option => !option.hidden)
+        .map(option => ({ name: option.text, path: option.value }));
     }
 
-    return entries;
+    return YAML_CATALOG
+      .filter(entry => entry.category === category && entry.showInPicker !== false)
+      .map(({ name, path }) => ({ name, path }));
   };
 
   const renderOrganismPicker = () => {
@@ -1158,7 +1216,12 @@ async function loadGenesLibrary() {
     const selectedValue = geneSelect.value;
     const selectedCategory = categoryForValue(selectedValue);
 
-    GENOME_CATEGORIES.forEach((category) => {
+    const categories = getGenomePickerCategories(
+      GENOME_CATEGORIES,
+      pickerEntries(CUSTOM_GENOME_CATEGORY).length > 0
+    );
+
+    categories.forEach((category) => {
       const categoryEl = document.createElement('div');
       categoryEl.className = 'organism-category';
 
@@ -1260,7 +1323,9 @@ async function loadGenesLibrary() {
   document.getElementById('new-genome-button')?.addEventListener('click', () => {
     currentGenomeSource = 'new';
     baseGenomeLabel = 'New';
-    setGenomeSelectLabel(GENOME_SELECT_VALUES.NEW, 'New');
+    newGenomeCache = null;
+    revealNewGenomeOption(geneSelect, 'New');
+    revealNewGenomeOption(mobileSelect, 'New');
     syncGenomeSelects(GENOME_SELECT_VALUES.NEW);
     void loadGenomFromYaml(GENOME_SELECT_VALUES.NEW);
   });
@@ -1345,20 +1410,29 @@ async function applyGenomConfig(cfg: any, labelForSelect: string | null) {
   refreshMachineSettingsInputs();
   updateDebugInfo({ forceRulesRebuild: true });
 
-  const sel = document.getElementById('gene-select') as HTMLSelectElement;
   if (labelForSelect) {
     const upsert = (sel: HTMLSelectElement | null) => {
       if (!sel) return;
-      let opt = sel.querySelector('option[data-custom="1"]') as HTMLOptionElement | null;
+      let opt = sel.querySelector(
+        'option[data-custom-kind="cached"]'
+      ) as HTMLOptionElement | null;
       if (!opt) {
         opt = document.createElement('option');
-        opt.setAttribute('data-custom', '1');
-        const manualGroup = sel.querySelector('optgroup[data-category="Manual"]');
-        if (manualGroup) manualGroup.insertBefore(opt, manualGroup.firstChild);
-        else sel.insertBefore(opt, sel.firstChild);
+        opt.dataset.customKind = 'cached';
       }
       opt.value = GENOME_SELECT_VALUES.CUSTOM;
-      opt.text = `Custom: ${labelForSelect}`;
+      opt.text = labelForSelect;
+      const customGroup = sel.querySelector(
+        `optgroup[data-category="${CUSTOM_GENOME_CATEGORY}"]`
+      ) as HTMLOptGroupElement | null;
+      if (customGroup) customGroup.appendChild(opt);
+      else {
+        const group = document.createElement('optgroup');
+        group.label = CUSTOM_GENOME_CATEGORY;
+        group.dataset.category = CUSTOM_GENOME_CATEGORY;
+        group.appendChild(opt);
+        sel.insertBefore(group, sel.firstChild);
+      }
       sel.selectedIndex = 0;
     };
 
@@ -1366,6 +1440,8 @@ async function applyGenomConfig(cfg: any, labelForSelect: string | null) {
     upsert(document.getElementById('gene-select-mobile') as HTMLSelectElement | null);
 
     customGenomeCache = deepClone(lastLoadedConfig);
+    customGenomeSource = currentGenomeSource;
+    customGenomeBaseLabel = baseGenomeLabel;
     syncGenomeSelects(GENOME_SELECT_VALUES.CUSTOM);
   }
 
@@ -1406,6 +1482,9 @@ if (uploadInput) {
       try { cfg = JSON.parse(text); }
       catch { alert('Unable to parse file. Please upload a valid YAML or JSON genome.'); return; }
     }
+    clearShareHashIfPresent();
+    currentGenomeSource = 'upload';
+    baseGenomeLabel = f.name;
     await applyGenomConfig(cfg, f.name);
     refreshMaxStepsInput();
     updateDebugInfo({ forceRulesRebuild: true });
