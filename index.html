@@ -295,69 +295,91 @@
   <div id="rule-editor-modal" class="modal" hidden>
     <div class="modal-backdrop"></div>
 
-    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="rule-editor-title">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="rule-editor-title" aria-describedby="rule-editor-subtitle">
       <div class="modal-header">
         <div>
-          <div id="rule-editor-title" class="modal-title">Edit rule</div>
+          <div id="rule-editor-title" class="modal-title">Edit gene</div>
           <div id="rule-editor-subtitle" class="modal-subtitle"></div>
         </div>
-        <button id="rule-editor-close" class="icon-button" type="button" title="Close" aria-label="Close">×</button>
+        <div class="modal-header-actions">
+          <label class="rule-editor-enabled-toggle">
+            <input type="checkbox" id="rule-editor-enabled" checked />
+            <span class="rule-editor-switch" aria-hidden="true"></span>
+            <span>Enabled</span>
+          </label>
+          <button id="rule-editor-close" class="modal-close-button" type="button" title="Close" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
       </div>
 
       <div class="modal-body">
-        <label><input type="checkbox" id="rule-editor-enabled" checked /> Enabled</label>
-        <hr class="modal-sep" />
+        <section class="rule-editor-section" aria-labelledby="rule-editor-condition-heading">
+          <h4 id="rule-editor-condition-heading">Condition</h4>
 
-        <h4>Condition</h4>
-        <div class="form-row form-row-inline">
-          <label for="rule-editor-current">Current</label>
-          <select id="rule-editor-current"></select>
-          <label for="rule-editor-prior">Prior</label>
-          <select id="rule-editor-prior"></select>
-        </div>
+          <div class="rule-editor-line rule-editor-state-line">
+            <label for="rule-editor-current">Current state:</label>
+            <span class="rule-editor-bracket-control">
+              <select id="rule-editor-current"></select>
+            </span>
+            <label for="rule-editor-prior">Prior state:</label>
+            <span class="rule-editor-bracket-control">
+              <select id="rule-editor-prior"></select>
+            </span>
+          </div>
 
-        <div class="form-row form-row-inline">
-          <label for="rule-editor-conn-ge">Connections ≥</label>
-          <input id="rule-editor-conn-ge" class="rule-int-tiny" type="number" step="1" placeholder="ignore" />
-          <label for="rule-editor-conn-le">≤</label>
-          <input id="rule-editor-conn-le" class="rule-int-tiny" type="number" step="1" placeholder="ignore" />
-          <label for="rule-editor-conn-with-state">with</label>
-          <select id="rule-editor-conn-with-state"></select>
-        </div>
+          <div class="rule-editor-line">
+            <label for="rule-editor-conn-ge">Connections:</label>
+            <span class="rule-editor-bracket-control rule-editor-range-control">
+              <input id="rule-editor-conn-ge" class="rule-int-tiny" type="number" step="1" placeholder="from" aria-label="Minimum connections" />
+              <span class="rule-editor-range-divider" aria-hidden="true">;</span>
+              <input id="rule-editor-conn-le" class="rule-int-tiny" type="number" step="1" placeholder="to" aria-label="Maximum connections" />
+            </span>
+            <label for="rule-editor-conn-with-state">with</label>
+            <span class="rule-editor-bracket-control">
+              <select id="rule-editor-conn-with-state"></select>
+            </span>
+          </div>
 
-        <div class="form-row form-row-inline">
-          <label for="rule-editor-par-ge">Parents ≥</label>
-          <input id="rule-editor-par-ge" class="rule-int-tiny" type="number" step="1" placeholder="ignore" />
-          <label for="rule-editor-par-le">≤</label>
-          <input id="rule-editor-par-le" class="rule-int-tiny" type="number" step="1" placeholder="ignore" />
-        </div>
+          <div class="rule-editor-line">
+            <label for="rule-editor-par-ge">Parents:</label>
+            <span class="rule-editor-bracket-control rule-editor-range-control">
+              <input id="rule-editor-par-ge" class="rule-int-tiny" type="number" step="1" placeholder="from" aria-label="Minimum parents" />
+              <span class="rule-editor-range-divider" aria-hidden="true">;</span>
+              <input id="rule-editor-par-le" class="rule-int-tiny" type="number" step="1" placeholder="to" aria-label="Maximum parents" />
+            </span>
+          </div>
+        </section>
 
-        <hr class="modal-sep" />
-
-        <h4>Operation</h4>
-        <div class="form-row form-row-inline">
-          <label for="rule-editor-op-kind">Kind</label>
-          <select id="rule-editor-op-kind"></select>
-        </div>
-        <div class="form-row form-row-inline">
-          <label for="rule-editor-op-operand">Operand</label>
-          <select id="rule-editor-op-operand"></select>
+        <section class="rule-editor-section" aria-labelledby="rule-editor-operation-heading">
+          <h4 id="rule-editor-operation-heading">Operation</h4>
+          <div class="rule-editor-line rule-editor-operation-line">
+            <span class="rule-editor-bracket-control rule-editor-operation-control">
+              <select id="rule-editor-op-kind" aria-label="Operation"></select>
+            </span>
+            <label for="rule-editor-op-operand">node with state</label>
+            <span class="rule-editor-bracket-control">
+              <select id="rule-editor-op-operand"></select>
+            </span>
+          </div>
           <small id="rule-editor-op-hint"></small>
-        </div>
+        </section>
+
         <div id="rule-editor-error" hidden></div>
       </div>
 
       <div class="modal-footer">
         <div class="modal-footer-left">
-          <button id="rule-editor-remove" class="secondary-button" type="button" title="Remove this rule">Remove</button>
-          <button id="rule-editor-clone" class="secondary-button" type="button" title="Clone this rule">Clone</button>
+          <button id="rule-editor-remove" class="secondary-button" type="button" title="Delete this gene">Delete</button>
+          <button id="rule-editor-clone" class="secondary-button" type="button" title="Clone this gene">Clone</button>
         </div>
         <div class="modal-footer-right">
-          <div class="form-row form-row-inline">
-            <label id="rule-editor-insert-label" for="rule-editor-insert-index">Insert at</label>
-            <input id="rule-editor-insert-index" class="rule-index-input" type="number" min="1" step="1" />
+          <div class="rule-editor-insert-control">
+            <label id="rule-editor-insert-label" for="rule-editor-insert-index">Insert at:</label>
+            <span class="rule-editor-bracket-control">
+              <input id="rule-editor-insert-index" class="rule-index-input" type="number" min="1" step="1" />
+            </span>
           </div>
-          <button id="rule-editor-cancel" class="secondary-button" type="button">Cancel</button>
           <button id="rule-editor-save" class="primary-button" type="button">Save</button>
         </div>
       </div>

@@ -21,8 +21,8 @@ export function getRuleEditorUiLabels(
 export function getRuleEditorOpKindOptions(): Array<{ kind: OperationKindEnum; label: string }> {
   return [
     { kind: OperationKindEnum.TurnToState,             label: 'Turn to state' },
-    { kind: OperationKindEnum.GiveBirthConnected,      label: 'Birth (connected)' },
-    { kind: OperationKindEnum.TryToConnectWithNearest, label: 'Connect nearest' },
+    { kind: OperationKindEnum.GiveBirthConnected,      label: 'Give birth connected' },
+    { kind: OperationKindEnum.TryToConnectWithNearest, label: 'Connect to nearest' },
     { kind: OperationKindEnum.DisconnectFrom,          label: 'Disconnect from' },
     { kind: OperationKindEnum.Die,                     label: 'Die' },
   ];
@@ -127,7 +127,6 @@ type DomRefs = {
 
   removeBtn: HTMLButtonElement;
   cloneBtn: HTMLButtonElement;
-  cancelBtn: HTMLButtonElement;
   saveBtn: HTMLButtonElement;
   closeBtn: HTMLButtonElement;
 };
@@ -166,7 +165,6 @@ function dom(): DomRefs {
 
     removeBtn: mustGetEl<HTMLButtonElement>('rule-editor-remove'),
     cloneBtn: mustGetEl<HTMLButtonElement>('rule-editor-clone'),
-    cancelBtn: mustGetEl<HTMLButtonElement>('rule-editor-cancel'),
     saveBtn: mustGetEl<HTMLButtonElement>('rule-editor-save'),
     closeBtn: mustGetEl<HTMLButtonElement>('rule-editor-close'),
   };
@@ -349,7 +347,6 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
     const d = dom();
 
     d.closeBtn.addEventListener('click', close);
-    d.cancelBtn.addEventListener('click', close);
 
     // ESC closes
     document.addEventListener('keydown', (e) => {
@@ -426,10 +423,9 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
     const count = deps.getRuleItems().length;
     const startTok = deps.getStartStateToken();
 
-    d.title.textContent = (mode === 'add') ? 'Add rule' : `Edit rule #${index + 1}`;
-    d.subtitle.textContent = (mode === 'add')
-      ? 'Adding will rebuild the machine and reset the graph.'
-      : 'Saving, cloning, or removing will rebuild the machine and reset the graph.';
+    d.modal.dataset.editorMode = mode;
+    d.title.textContent = (mode === 'add') ? 'New gene' : `Edit gene #${index + 1}`;
+    d.subtitle.textContent = '';
 
     // Buttons visibility
     d.removeBtn.hidden = (mode === 'add');

@@ -671,20 +671,23 @@ body.modal-open {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(0, 0, 0, 0.72);
 }
 
 .modal-dialog {
   position: relative;
-  width: min(620px, 100%);
+  width: min(760px, 100%);
+  min-height: min(560px, calc(100dvh - 24px));
   max-height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: auto;
-  padding: 22px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-large);
+  padding: 30px 32px 28px;
+  border: 2px solid #aaa;
+  border-radius: 22px;
   background: var(--color-canvas);
   color: var(--color-text);
-  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.75);
+  box-shadow: none;
 }
 
 .modal-header,
@@ -699,31 +702,274 @@ body.modal-open {
   align-items: flex-start;
 }
 
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.modal[data-editor-mode="edit"] .modal-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "heading close"
+    "toggle close";
+  column-gap: 12px;
+  row-gap: 11px;
+}
+
+.modal[data-editor-mode="edit"] .modal-header > div:first-child {
+  grid-area: heading;
+}
+
+.modal[data-editor-mode="edit"] .modal-header-actions {
+  display: contents;
+}
+
+.modal[data-editor-mode="edit"] .rule-editor-enabled-toggle {
+  grid-area: toggle;
+  justify-self: start;
+}
+
+.modal[data-editor-mode="edit"] .modal-close-button {
+  grid-area: close;
+  align-self: start;
+}
+
 .modal-title {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
+  line-height: 1;
 }
 
 .modal-subtitle {
-  margin-top: 4px;
+  margin-top: 7px;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-family: var(--font-technical);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.modal-subtitle:empty {
+  display: none;
+}
+
+.modal-close-button {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 40px;
+  font-weight: 200;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close-button:hover {
+  color: var(--color-text-muted);
+}
+
+.rule-editor-enabled-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.rule-editor-enabled-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rule-editor-switch {
+  width: 34px;
+  height: 18px;
+  position: relative;
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.rule-editor-switch::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transition: transform 140ms ease, background-color 140ms ease;
+}
+
+.rule-editor-enabled-toggle input:checked + .rule-editor-switch {
+  border-color: var(--color-text);
+  background: var(--color-text);
+}
+
+.rule-editor-enabled-toggle input:checked + .rule-editor-switch::after {
+  transform: translateX(16px);
+  background: var(--color-canvas);
+}
+
+.rule-editor-enabled-toggle input:focus-visible + .rule-editor-switch {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
 }
 
 .modal-body {
-  padding: 24px 0;
+  display: grid;
+  gap: 48px;
+  padding: 50px 2px 42px;
 }
 
-.modal-body h4 {
-  margin-bottom: 12px;
+.rule-editor-section h4 {
+  margin: 0 0 24px;
+  font-size: 24px;
+  line-height: 1.1;
 }
 
-.modal-body .form-row {
-  margin-top: 10px;
+.rule-editor-section {
+  min-width: 0;
+}
+
+.rule-editor-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.rule-editor-line + .rule-editor-line {
+  margin-top: 17px;
+}
+
+.rule-editor-state-line {
+  display: grid;
+  grid-template-columns: max-content minmax(72px, 1fr) max-content minmax(72px, 1fr);
+  gap: 10px;
+}
+
+.rule-editor-state-line .rule-editor-bracket-control {
+  justify-self: start;
+}
+
+.rule-editor-bracket-control {
+  min-width: 0;
+  min-height: 31px;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  color: var(--color-text);
+  font-family: var(--font-technical);
+  white-space: nowrap;
+}
+
+.rule-editor-bracket-control::before {
+  content: "[";
+}
+
+.rule-editor-bracket-control::after {
+  content: "]";
+}
+
+.rule-editor-bracket-control:hover {
+  border-radius: 2px;
+  background: var(--color-text);
+  color: var(--color-canvas);
+}
+
+.modal-dialog .rule-editor-bracket-control select,
+.modal-dialog .rule-editor-bracket-control input[type="number"] {
+  min-width: 0;
+  min-height: 31px;
+  padding: 2px 7px;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-technical);
+  font-size: inherit;
+  line-height: 1;
+}
+
+.modal-dialog .rule-editor-bracket-control select {
+  cursor: pointer;
+}
+
+.modal-dialog .rule-editor-bracket-control select option {
+  background: var(--color-canvas);
+  color: var(--color-text);
+}
+
+.modal-dialog .rule-editor-bracket-control select:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.rule-editor-range-control {
+  gap: 2px;
+}
+
+.modal-dialog .rule-editor-range-control .rule-int-tiny {
+  width: 66px;
+  padding-inline: 3px;
+  text-align: center;
+}
+
+.modal-dialog .rule-editor-range-control input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.rule-editor-range-divider {
+  color: var(--color-text-muted);
+}
+
+.rule-editor-bracket-control:hover .rule-editor-range-divider,
+.rule-editor-bracket-control:hover input::placeholder {
+  color: var(--color-canvas);
+}
+
+.rule-editor-operation-line {
+  gap: 14px;
+}
+
+.rule-editor-operation-control {
+  max-width: 260px;
+}
+
+#rule-editor-op-kind {
+  width: auto;
+  max-width: 230px;
+}
+
+#rule-editor-op-hint {
+  display: block;
+  margin-top: 9px;
 }
 
 .modal-footer {
   flex-wrap: wrap;
+  margin-top: auto;
 }
 
 .modal-footer-left,
@@ -738,15 +984,45 @@ body.modal-open {
   margin-left: auto;
 }
 
-.modal-sep {
-  margin: 20px 0;
-  border: 0;
-  border-top: 1px solid var(--color-border);
+.rule-editor-insert-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+  font-size: 20px;
+  font-weight: 700;
 }
 
-#rule-editor-op-kind {
-  width: 190px;
-  max-width: 100%;
+.modal-dialog .secondary-button,
+.modal-dialog .primary-button {
+  min-height: 42px;
+  padding: 7px 13px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 18px;
+}
+
+.modal-dialog .secondary-button:hover {
+  background: var(--color-surface-raised);
+}
+
+#rule-editor-remove {
+  color: var(--color-danger);
+}
+
+#rule-editor-save {
+  border-color: var(--color-text);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+#rule-editor-save:hover {
+  background: var(--color-text);
+  color: var(--color-canvas);
 }
 
 .rule-int-tiny {
@@ -761,13 +1037,82 @@ body.modal-open {
 }
 
 .rule-index-input {
-  width: 68px;
+  width: 46px;
+  text-align: center;
 }
 
 #rule-editor-error {
-  margin-top: 10px;
+  margin-top: -28px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-small);
   color: var(--color-danger);
   font-size: 14px;
+}
+
+@media (max-width: 700px) {
+  .modal {
+    align-items: flex-start;
+    padding: 8px;
+  }
+
+  .modal-dialog {
+    min-height: calc(100dvh - 16px);
+    padding: 22px 20px 20px;
+    border-radius: 16px;
+  }
+
+  .modal-header-actions {
+    gap: 12px;
+  }
+
+  .rule-editor-enabled-toggle > span:last-child {
+    display: none;
+  }
+
+  .modal-title {
+    font-size: 27px;
+  }
+
+  .modal-body {
+    gap: 38px;
+    padding: 38px 0 36px;
+  }
+
+  .rule-editor-state-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .rule-editor-line {
+    font-size: 16px;
+  }
+
+  .rule-editor-operation-line {
+    align-items: flex-start;
+  }
+
+  .rule-editor-operation-control {
+    max-width: 100%;
+  }
+
+  .modal-footer {
+    align-items: flex-end;
+    gap: 18px;
+  }
+
+  .modal-footer-left,
+  .modal-footer-right {
+    width: 100%;
+  }
+
+  .modal-footer-right {
+    justify-content: flex-end;
+  }
+
+  .rule-editor-insert-control {
+    margin-right: auto;
+    font-size: 18px;
+  }
 }
 
 /* Toast */
