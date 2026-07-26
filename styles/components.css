@@ -182,12 +182,18 @@
 }
 
 #rules-section .board {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, 43px);
   align-items: center;
   gap: 6px;
-  max-height: 128px;
-  overflow-y: auto;
+  margin: -4px;
+  padding: 4px;
+  overflow: visible;
+}
+
+#rules-section .gene-tile {
+  width: 43px;
+  height: 29px;
 }
 
 .gene-tile {
