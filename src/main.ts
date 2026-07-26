@@ -387,7 +387,6 @@ type SimulationButtonState = 'start' | 'running' | 'resume';
 
 function setSimulationButtonState(state: SimulationButtonState) {
   const label = state === 'running' ? 'Pause' : state === 'resume' ? 'Resume' : 'Start';
-  pauseResumeButton.textContent = label;
   pauseResumeButton.dataset.state = state;
   pauseResumeButton.setAttribute('aria-label', `${label} simulation`);
   pauseResumeButton.title = `${label} simulation`;
@@ -788,13 +787,11 @@ function syncMobilePlayIcon() {
   const mp = document.getElementById('mobile-play') as HTMLButtonElement | null;
   if (!mp) return;
   if (isSimulationRunning) {
-    mp.textContent = '⏸';
-    mp.style.color = '';
+    mp.dataset.state = 'running';
     mp.setAttribute('aria-label', 'Pause');
     mp.title = 'Pause';
   } else {
-    mp.textContent = '▶︎';
-    mp.style.color = '#16a34a';
+    mp.dataset.state = 'start';
     mp.setAttribute('aria-label', 'Start');
     mp.title = 'Start';
   }

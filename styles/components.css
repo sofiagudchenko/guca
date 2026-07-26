@@ -256,7 +256,7 @@
 .genome-file-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   margin-top: 28px;
 }
 
@@ -280,6 +280,28 @@
 .icon-button:hover {
   border-color: var(--color-border-strong);
   background: var(--color-surface-raised);
+}
+
+.button-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  pointer-events: none;
+}
+
+.pause-state-icon {
+  display: none;
+}
+
+.genome-file-actions .icon-button {
+  width: 40px;
+  height: 40px;
+}
+
+.genome-file-actions .button-icon {
+  width: 28px;
+  height: 28px;
 }
 
 .upload-button {
@@ -509,27 +531,35 @@ small {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: var(--color-text);
-  color: var(--color-canvas);
+  background: transparent;
   font-size: 0;
 }
 
-.play-button::before {
-  content: "▶";
-  margin-left: 3px;
-  font-size: 23px;
+.play-button .button-icon {
+  width: 50px;
+  height: 50px;
 }
 
-.play-button[data-state="running"]::before {
-  content: "Ⅱ";
-  margin-left: 0;
-  font-size: 21px;
-  font-weight: 700;
+.transport-controls .toolbar-button:not(.play-button) {
+  width: 46px;
+  height: 46px;
+}
+
+.transport-controls .toolbar-button:not(.play-button) .button-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.play-button[data-state="running"] .play-state-icon {
+  display: none;
+}
+
+.play-button[data-state="running"] .pause-state-icon {
+  display: block;
 }
 
 .step-button {
-  font-family: var(--font-technical);
-  font-size: 21px;
+  font-size: 0;
 }
 
 .toolbar-label {
@@ -792,6 +822,38 @@ body.modal-open {
 #mobile-toolbar button.toggle-active {
   background: var(--color-text);
   color: var(--color-canvas);
+}
+
+#mobile-toolbar .mobile-icon-button {
+  width: 38px;
+  padding: 6px;
+}
+
+#mobile-toolbar .mobile-icon-button:not(.mobile-play-button) {
+  width: 42px;
+  padding: 6px;
+}
+
+#mobile-toolbar .mobile-icon-button:not(.mobile-play-button) .button-icon {
+  width: 28px;
+  height: 28px;
+}
+
+#mobile-toolbar #mobile-reset {
+  width: 46px;
+}
+
+#mobile-toolbar #mobile-reset .button-icon {
+  width: 32px;
+  height: 32px;
+}
+
+#mobile-toolbar .mobile-play-button[data-state="running"] .play-state-icon {
+  display: none;
+}
+
+#mobile-toolbar .mobile-play-button[data-state="running"] .pause-state-icon {
+  display: block;
 }
 
 #rules-overlay .gene-tile {
