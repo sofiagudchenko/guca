@@ -28,6 +28,26 @@ export function getRuleEditorOpKindOptions(): Array<{ kind: OperationKindEnum; l
   ];
 }
 
+export function getRuleEditorOperandUi(kind: string): {
+  showLabel: boolean;
+  showOperand: boolean;
+  hint: string;
+} {
+  if (kind === 'Die') {
+    return {
+      showLabel: false,
+      showOperand: false,
+      hint: 'No operand for Die.',
+    };
+  }
+
+  return {
+    showLabel: kind !== 'TurnToState',
+    showOperand: true,
+    hint: '',
+  };
+}
+
 export interface RuleEditorDeps {
   // Simulation control (owned by main.ts)
   pauseForEditor(): void;   // called when opening modal
@@ -117,6 +137,8 @@ type DomRefs = {
   parLeInput: HTMLInputElement;
 
   opKindSel: HTMLSelectElement;
+  opOperandLabel: HTMLLabelElement;
+  opOperandControl: HTMLSpanElement;
   opOperandSel: HTMLSelectElement;
   opHint: HTMLSpanElement;
 
@@ -155,6 +177,8 @@ function dom(): DomRefs {
     parLeInput: mustGetEl<HTMLInputElement>('rule-editor-par-le'),
 
     opKindSel: mustGetEl<HTMLSelectElement>('rule-editor-op-kind'),
+    opOperandLabel: mustGetEl<HTMLLabelElement>('rule-editor-op-operand-label'),
+    opOperandControl: mustGetEl<HTMLSpanElement>('rule-editor-op-operand-control'),
     opOperandSel: mustGetEl<HTMLSelectElement>('rule-editor-op-operand'),
     opHint: mustGetEl<HTMLSpanElement>('rule-editor-op-hint'),
 
@@ -237,9 +261,11 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
   function updateOperandUi() {
     const d = dom();
     const kind = String(d.opKindSel.value);
-    const hasOperand = kind !== 'Die';
-    d.opOperandSel.disabled = !hasOperand;
-    d.opHint.textContent = hasOperand ? '' : 'No operand for Die.';
+    const ui = getRuleEditorOperandUi(kind);
+    d.opOperandLabel.hidden = !ui.showLabel;
+    d.opOperandControl.hidden = !ui.showOperand;
+    d.opOperandSel.disabled = !ui.showOperand;
+    d.opHint.textContent = ui.hint;
   }
 
  function applyModeLabels(mode: RuleEditorMode) {

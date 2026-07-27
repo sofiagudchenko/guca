@@ -912,6 +912,7 @@ body.modal-open {
 }
 
 .modal-dialog .rule-editor-bracket-control select {
+  field-sizing: content;
   cursor: pointer;
 }
 
