@@ -10,7 +10,5 @@ export function getGenomePickerCategories<T extends string>(
 }
 
 export function getEditedGenomeLabel(source: string, baseLabel: string): string {
-  if (source === 'new') return 'New (edited)';
-  if (source === 'shared' || source === 'url') return 'Shared (edited)';
-  return `Edited: ${baseLabel}`;
+  return `${baseLabel} (edited)`;
 }

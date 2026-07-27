@@ -15,16 +15,15 @@ describe('genome picker custom entries', () => {
     ]);
   });
 
-  test('uses the requested names for shared and new genome edits', () => {
+  test('appends the edited suffix to every genome name', () => {
+    expect(getEditedGenomeLabel('catalog', 'Dumbbell')).toBe(
+      'Dumbbell (edited)'
+    );
+    expect(getEditedGenomeLabel('upload', 'example.yaml')).toBe(
+      'example.yaml (edited)'
+    );
     expect(getEditedGenomeLabel('shared', 'Shared')).toBe('Shared (edited)');
     expect(getEditedGenomeLabel('url', 'Shared')).toBe('Shared (edited)');
     expect(getEditedGenomeLabel('new', 'New')).toBe('New (edited)');
-  });
-
-  test('keeps the existing label convention for other edited genomes', () => {
-    expect(getEditedGenomeLabel('catalog', 'Dumbbell')).toBe('Edited: Dumbbell');
-    expect(getEditedGenomeLabel('upload', 'example.yaml')).toBe(
-      'Edited: example.yaml'
-    );
   });
 });

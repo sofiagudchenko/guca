@@ -53,6 +53,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sidebar-heading-row .sidebar-heading {
+  margin-bottom: 0;
 }
 
 .sidebar-heading {
@@ -64,12 +69,16 @@
 .sidebar-add-button {
   width: 30px;
   height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   border: 0;
   background: transparent;
   font-size: 30px;
   font-weight: 300;
   line-height: 1;
+  transform: translateY(2px);
   cursor: pointer;
 }
 

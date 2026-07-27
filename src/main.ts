@@ -1207,12 +1207,12 @@ const YAML_CATALOG: GenomeCatalogEntry[] = [
   { name: 'Hex replicator', path: 'data/genoms/hexagon_replicator.yaml', category: 'Manual' },
   { name: 'Fractal', path: 'data/genoms/fractal3_genom.yaml', category: 'Manual' },
   { name: 'Two wheels', path: 'data/genoms/two_wheels.yaml', category: 'Manual' },
+  { name: 'Dumbbell and Hairy Circle Hybrid', path: 'data/genoms/dumbbell_and_hairy_circle_hybrid.yaml', category: 'Manual' },
+  { name: 'Strange Figure #1', path: 'data/genoms/strange_figure1_genom.yaml', category: 'Manual' },
+  { name: 'Strange Figure #2', path: 'data/genoms/strange_figure2_genom.yaml', category: 'Manual' },
 
-  { name: 'Dumbbell and Hairy Circle Hybrid', path: 'data/genoms/dumbbell_and_hairy_circle_hybrid.yaml', category: 'Evolution' },
   { name: 'Triangle Mesh', path: 'data/genoms/exp005_trimesh_genom.yaml', category: 'Evolution' },
   { name: 'Quad Mesh', path: 'data/genoms/quadmesh.yaml', category: 'Evolution' },
-  { name: 'Strange Figure #1', path: 'data/genoms/strange_figure1_genom.yaml', category: 'Evolution' },
-  { name: 'Strange Figure #2', path: 'data/genoms/strange_figure2_genom.yaml', category: 'Evolution' },
 
   { name: "Conway's Life", path: 'data/genoms/conways_game_of_life.yaml', category: 'Cellular Automata' },
   { name: "Conway's Life (Cylinder)", path: 'data/genoms/conways_game_of_life_diagonal_cylinder.yaml', category: 'Cellular Automata' },
@@ -1504,7 +1504,7 @@ async function loadGenesLibrary() {
     syncGenomeSelects(GENOME_SELECT_VALUES.CUSTOM);
     showToast('Loaded genome from shared link.');
   } else {
-    await loadGenomFromYaml(geneSelect.value);
+    await handleGenomeSelection(geneSelect.value);
   }
 
 
