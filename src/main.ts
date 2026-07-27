@@ -789,6 +789,165 @@ function buildRuleTilesHTML(items: RuleItem[], cap: number): string {
   return tiles + addTile;
 }
 
+type RuleTileDragState = {
+  pointerId: number;
+  tile: HTMLDivElement;
+  fromIndex: number;
+  startX: number;
+  startY: number;
+  dragging: boolean;
+};
+
+const wiredRuleTileReorderContainers = new WeakSet<HTMLDivElement>();
+const RULE_TILE_SHIFT_DURATION_MS = 180;
+
+function animateRuleTileMutation(
+  container: HTMLDivElement,
+  mutate: () => void
+): Animation[] {
+  const tiles = Array.from(container.querySelectorAll<HTMLDivElement>('.gene-tile'));
+  const previousRects = new Map(
+    tiles.map(tile => [tile, tile.getBoundingClientRect()] as const)
+  );
+
+  // Capture the current visual position before replacing an in-flight FLIP animation.
+  tiles.forEach(tile => tile.getAnimations().forEach(animation => animation.cancel()));
+  mutate();
+
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return [];
+
+  return tiles.flatMap(tile => {
+    const previous = previousRects.get(tile);
+    if (!previous) return [];
+
+    const current = tile.getBoundingClientRect();
+    const offsetX = previous.left - current.left;
+    const offsetY = previous.top - current.top;
+    if (Math.abs(offsetX) < 0.5 && Math.abs(offsetY) < 0.5) return [];
+
+    return [tile.animate(
+      [
+        { transform: `translate(${offsetX}px, ${offsetY}px)` },
+        { transform: 'translate(0, 0)' },
+      ],
+      {
+        duration: RULE_TILE_SHIFT_DURATION_MS,
+        easing: 'cubic-bezier(0.2, 0, 0, 1)',
+      }
+    )];
+  });
+}
+
+function wireRuleTileReordering(container: HTMLDivElement) {
+  if (wiredRuleTileReorderContainers.has(container)) return;
+  wiredRuleTileReorderContainers.add(container);
+
+  let dragState: RuleTileDragState | null = null;
+  let reorderCommitPending = false;
+  const dragThreshold = 5;
+
+  const finishDrag = (event: PointerEvent, cancelled: boolean) => {
+    const state = dragState;
+    if (!state || state.pointerId !== event.pointerId) return;
+
+    dragState = null;
+    state.tile.classList.remove('dragging');
+
+    if (state.tile.hasPointerCapture?.(event.pointerId)) {
+      state.tile.releasePointerCapture(event.pointerId);
+    }
+
+    if (!state.dragging) return;
+
+    state.tile.dataset.suppressClick = '1';
+    if (cancelled) {
+      updateDebugInfo({ forceRulesRebuild: true });
+      return;
+    }
+
+    const orderedTiles = Array.from(
+      container.querySelectorAll<HTMLDivElement>('.gene-tile:not(.add-tile)')
+    );
+    const toIndex = orderedTiles.indexOf(state.tile);
+    if (toIndex < 0 || toIndex === state.fromIndex) return;
+
+    const settlingAnimations = orderedTiles.flatMap(tile => tile.getAnimations());
+    reorderCommitPending = true;
+    void Promise.all(
+      settlingAnimations.map(animation => animation.finished.catch(() => undefined))
+    ).then(() => ruleEditor.reorder(state.fromIndex, toIndex))
+      .finally(() => {
+        reorderCommitPending = false;
+      });
+  };
+
+  container.addEventListener('pointerdown', (event) => {
+    if (reorderCommitPending) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    const target = event.target as Element | null;
+    const tile = target?.closest<HTMLDivElement>('.gene-tile:not(.add-tile)') ?? null;
+    if (!tile || tile.parentElement !== container) return;
+
+    const fromIndex = Number(tile.dataset.idx ?? '-1');
+    if (!Number.isInteger(fromIndex) || fromIndex < 0) return;
+
+    dragState = {
+      pointerId: event.pointerId,
+      tile,
+      fromIndex,
+      startX: event.clientX,
+      startY: event.clientY,
+      dragging: false,
+    };
+    tile.setPointerCapture?.(event.pointerId);
+  });
+
+  container.addEventListener('pointermove', (event) => {
+    const state = dragState;
+    if (!state || state.pointerId !== event.pointerId) return;
+
+    if (!state.dragging) {
+      const distance = Math.hypot(
+        event.clientX - state.startX,
+        event.clientY - state.startY
+      );
+      if (distance < dragThreshold) return;
+
+      state.dragging = true;
+      state.tile.classList.add('dragging');
+    }
+
+    event.preventDefault();
+
+    const hit = document.elementFromPoint(event.clientX, event.clientY);
+    const target = hit?.closest<HTMLDivElement>('.gene-tile') ?? null;
+    if (!target || target === state.tile || target.parentElement !== container) return;
+
+    if (target.classList.contains('add-tile')) {
+      if (state.tile.nextElementSibling === target) return;
+      animateRuleTileMutation(container, () => {
+        container.insertBefore(state.tile, target);
+      });
+      return;
+    }
+
+    const tiles = Array.from(container.querySelectorAll<HTMLDivElement>('.gene-tile'));
+    const sourcePosition = tiles.indexOf(state.tile);
+    const targetPosition = tiles.indexOf(target);
+    animateRuleTileMutation(container, () => {
+      if (sourcePosition < targetPosition) {
+        container.insertBefore(state.tile, target.nextSibling);
+      } else {
+        container.insertBefore(state.tile, target);
+      }
+    });
+  });
+
+  container.addEventListener('pointerup', (event) => finishDrag(event, false));
+  container.addEventListener('pointercancel', (event) => finishDrag(event, true));
+}
+
 
 function syncMobilePlayIcon() {
   const mp = document.getElementById('mobile-play') as HTMLButtonElement | null;
@@ -2294,7 +2453,7 @@ function updateDebugInfo(opts?: { forceRulesRebuild?: boolean }) {
       `Iteration ${gumMachine.getIterations()} · ${nodes.length} ${nodeLabel} · ${links.length} ${edgeLabel}`;
   }
 
-  const board = document.getElementById('rule-board');
+  const board = document.getElementById('rule-board') as HTMLDivElement | null;
   const toggleBtn = document.getElementById('toggle-rules-btn') as HTMLButtonElement | null;
   const items = gumMachine.getRuleItems();
   const genomeCount = document.getElementById('genome-count');
@@ -2351,11 +2510,16 @@ function updateDebugInfo(opts?: { forceRulesRebuild?: boolean }) {
         });
 
         el.addEventListener('click', () => {
+          if (el.dataset.suppressClick === '1') {
+            delete el.dataset.suppressClick;
+            return;
+          }
           ruleEditor.open('edit', idx);
         });
 
 
       });
+      wireRuleTileReordering(board);
     } else {
       // Lightweight update: keep existing elements & listeners, just update classes/tooltips
       board.querySelectorAll<HTMLDivElement>('.gene-tile').forEach(el => {
@@ -2438,9 +2602,16 @@ function renderRulesOverlay(forceRulesRebuild = true) {
     }
     const idx = Number(el.dataset.idx ?? '-1');
     if (Number.isNaN(idx) || idx < 0) return;    
-    el.onclick = () => ruleEditor.open('edit', idx);
+    el.onclick = () => {
+      if (el.dataset.suppressClick === '1') {
+        delete el.dataset.suppressClick;
+        return;
+      }
+      ruleEditor.open('edit', idx);
+    };
 
   });
+  wireRuleTileReordering(container);
 
 }
 

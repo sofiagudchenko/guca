@@ -2,12 +2,14 @@
 import { NodeState, OperationKindEnum, RuleItem } from './gum';
 import { mapOperationKindToString } from './utils';
 import { getEditedGenomeLabel } from './genomePicker';
+import { reorderRules } from './ruleReorder';
 
 export type RuleEditorMode = 'add' | 'edit';
 
 export interface RuleEditorController {
   open(mode: RuleEditorMode, index?: number): void;
   close(): void;
+  reorder(fromIndex: number, toIndex: number): Promise<boolean>;
 }
 
 /** Pure helper (safe to import in Jest / Node) */
@@ -199,11 +201,17 @@ function dom(): DomRefs {
 // -------------------- controller --------------------
 
 export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorController {
+  const noopController: RuleEditorController = {
+    open: () => {},
+    close: () => {},
+    reorder: async () => false,
+  };
+
   // If called in a non-DOM environment, return no-op controller.
-  if (!hasDom()) return { open: () => {}, close: () => {} };
+  if (!hasDom()) return noopController;
 
   // If the modal does not exist in DOM, no-op (keeps app working).
-  if (!document.getElementById('rule-editor-modal')) return { open: () => {}, close: () => {} };
+  if (!document.getElementById('rule-editor-modal')) return noopController;
 
   let editorState: { mode: RuleEditorMode; index: number } | null = null;
   let selectsReady = false;
@@ -366,6 +374,24 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
     showError(null);
   }
 
+  async function reorder(fromIndex: number, toIndex: number): Promise<boolean> {
+    const rules = deps.exportRulesFromMachine();
+    if (
+      !Number.isInteger(fromIndex) ||
+      !Number.isInteger(toIndex) ||
+      fromIndex < 0 ||
+      fromIndex >= rules.length ||
+      toIndex < 0 ||
+      toIndex >= rules.length ||
+      fromIndex === toIndex
+    ) {
+      return false;
+    }
+
+    await commitRuleTable(reorderRules(rules, fromIndex, toIndex));
+    return true;
+  }
+
   function wireOnce() {
     if (wired) return;
     wired = true;
@@ -515,5 +541,5 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
     requestAnimationFrame(() => d.currentSel.focus());
   }
 
-  return { open, close };
+  return { open, close, reorder };
 }

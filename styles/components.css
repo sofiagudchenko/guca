@@ -210,6 +210,19 @@
   cursor: pointer;
 }
 
+.gene-tile:not(.add-tile) {
+  cursor: grab;
+  touch-action: none;
+}
+
+.gene-tile.dragging {
+  z-index: 1;
+  cursor: grabbing;
+  opacity: 0.82;
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
 .gene-tile:hover {
   outline: 1px solid var(--color-text);
   outline-offset: 2px;
