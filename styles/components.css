@@ -10,10 +10,14 @@
   cursor: pointer;
 }
 
-.header-link:hover,
-.header-action:hover,
 .header-action[aria-expanded="true"] {
   color: var(--color-text-muted);
+}
+
+.header-link:hover,
+.header-action:hover {
+  background: var(--color-text);
+  color: var(--color-canvas);
 }
 
 .about-panel {
@@ -83,7 +87,8 @@
 }
 
 .sidebar-add-button:hover {
-  color: var(--color-text-muted);
+  background: var(--color-text);
+  color: var(--color-canvas);
 }
 
 #gene-select {
@@ -103,7 +108,7 @@
 }
 
 .organism-picker-trigger {
-  min-height: 43px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -113,9 +118,13 @@
   line-height: 1.2;
 }
 
-.organism-picker-trigger:hover,
 .organism-picker-trigger[aria-expanded="true"] {
   color: var(--color-text-muted);
+}
+
+.organism-picker-trigger:hover {
+  background: var(--color-text);
+  color: var(--color-canvas);
 }
 
 .organism-picker-chevron,
@@ -310,6 +319,17 @@
   background: var(--color-surface-raised);
 }
 
+.genome-file-actions .icon-button:hover {
+  border-color: var(--color-text);
+  border-radius: 0;
+  background: var(--color-text);
+  color: var(--color-canvas);
+}
+
+.genome-file-actions .icon-button:hover .button-icon {
+  filter: invert(1);
+}
+
 .button-icon {
   display: block;
   width: 24px;
@@ -360,6 +380,7 @@
 
 .advanced-shell > summary {
   width: 100%;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -370,6 +391,11 @@
   font-weight: 700;
   cursor: pointer;
   user-select: none;
+}
+
+.advanced-shell > summary:hover {
+  background: var(--color-text);
+  color: var(--color-canvas);
 }
 
 .advanced-shell > summary::-webkit-details-marker {
