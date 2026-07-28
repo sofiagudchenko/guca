@@ -33,20 +33,17 @@ export function getRuleEditorOpKindOptions(): Array<{ kind: OperationKindEnum; l
 export function getRuleEditorOperandUi(kind: string): {
   showLabel: boolean;
   showOperand: boolean;
-  hint: string;
 } {
   if (kind === 'Die') {
     return {
       showLabel: false,
       showOperand: false,
-      hint: 'No operand for Die.',
     };
   }
 
   return {
     showLabel: kind !== 'TurnToState',
     showOperand: true,
-    hint: '',
   };
 }
 
@@ -142,7 +139,6 @@ type DomRefs = {
   opOperandLabel: HTMLLabelElement;
   opOperandControl: HTMLSpanElement;
   opOperandSel: HTMLSelectElement;
-  opHint: HTMLSpanElement;
 
   insertIndexInput: HTMLInputElement;
   insertLabelEl: HTMLLabelElement | null;
@@ -182,7 +178,6 @@ function dom(): DomRefs {
     opOperandLabel: mustGetEl<HTMLLabelElement>('rule-editor-op-operand-label'),
     opOperandControl: mustGetEl<HTMLSpanElement>('rule-editor-op-operand-control'),
     opOperandSel: mustGetEl<HTMLSelectElement>('rule-editor-op-operand'),
-    opHint: mustGetEl<HTMLSpanElement>('rule-editor-op-hint'),
 
     insertIndexInput: mustGetEl<HTMLInputElement>('rule-editor-insert-index'),
     insertLabelEl: (document.getElementById('rule-editor-insert-label') as HTMLLabelElement | null),
@@ -273,7 +268,6 @@ export function createRuleEditorController(deps: RuleEditorDeps): RuleEditorCont
     d.opOperandLabel.hidden = !ui.showLabel;
     d.opOperandControl.hidden = !ui.showOperand;
     d.opOperandSel.disabled = !ui.showOperand;
-    d.opHint.textContent = ui.hint;
   }
 
  function applyModeLabels(mode: RuleEditorMode) {

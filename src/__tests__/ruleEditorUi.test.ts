@@ -5,15 +5,13 @@ describe('rule editor operation controls', () => {
     expect(getRuleEditorOperandUi('TurnToState')).toEqual({
       showLabel: false,
       showOperand: true,
-      hint: '',
     });
   });
 
-  test('Die shows only its explanation', () => {
+  test('Die hides the operand controls', () => {
     expect(getRuleEditorOperandUi('Die')).toEqual({
       showLabel: false,
       showOperand: false,
-      hint: 'No operand for Die.',
     });
   });
 
@@ -21,7 +19,6 @@ describe('rule editor operation controls', () => {
     expect(getRuleEditorOperandUi('DisconnectFrom')).toEqual({
       showLabel: true,
       showOperand: true,
-      hint: '',
     });
   });
 });
