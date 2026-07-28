@@ -20,7 +20,7 @@
   width: 100%;
   max-height: min(240px, 35vh);
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(24px, 5vw, 80px);
   padding: 22px 28px 26px;
   overflow-y: auto;
@@ -32,7 +32,7 @@
 }
 
 .about-panel p {
-  max-width: 720px;
+  max-width: none;
   margin-bottom: 0;
 }
 
@@ -629,6 +629,10 @@ small {
 
 .view-control .segment {
   min-width: 48px;
+}
+
+.view-control {
+  grid-column: 4;
 }
 
 .segment + .segment {

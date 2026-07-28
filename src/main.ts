@@ -1768,7 +1768,11 @@ function setViewMode(mode: ViewMode) {
 
   const cutUnavailable = mode === '3d';
   graphToolsControl?.classList.toggle('is-3d', cutUnavailable);
+  if (graphToolsControl) {
+    graphToolsControl.hidden = cutUnavailable;
+  }
   if (btnMove) {
+    btnMove.hidden = cutUnavailable;
     btnMove.disabled = cutUnavailable;
     btnMove.title = cutUnavailable
       ? 'Move is the only tool available in 3D'
